@@ -9,7 +9,7 @@ import { OWNER_ASSIGNEE, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/
 import { BoardDialog } from "./BoardDialog";
 import { CardDialog } from "./CardDialog";
 import { DependencyDialog } from "./DependencyDialog";
-import { GanttView } from "./GanttView";
+import { GanttView, type TimelineMode } from "./GanttView";
 import { InstallButton } from "./InstallButton";
 import { OrbitMark } from "./LoginScreen";
 import { MemberSummary } from "./MemberSummary";
@@ -65,6 +65,7 @@ export function BoardScreen({
   const [membersOpen, setMembersOpen] = useState(false);
   const [view, setView] = useState<"board" | "timeline">("board");
   const [personKey, setPersonKey] = useState(EVERYONE);
+  const [timelineMode, setTimelineMode] = useState<TimelineMode>("task");
   const [notesOpen, setNotesOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -369,6 +370,9 @@ export function BoardScreen({
             dependencies={timelineTasks}
             today={today}
             ownerName={(card) => (card.isSelf && !isOwner ? ownerName : card.name)}
+            people={selectedPerson ? [selectedPerson] : summaries}
+            mode={timelineMode}
+            onModeChange={setTimelineMode}
             onOpen={(_card, dependency) => openTask(dependency)}
             emptyMessage={selectedPerson ? `${selectedPerson.name} has no tasks on this board.` : undefined}
           />
