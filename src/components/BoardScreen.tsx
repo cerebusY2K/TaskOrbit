@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api-client";
 import { isOverdue, todayISO } from "@/lib/domain";
+import { EVERYONE, summarizeMembers } from "@/lib/member-summary";
 import type { Board, BoardPayload, Card, Dependency, Status } from "@/lib/types";
 import { OWNER_ASSIGNEE, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { BoardDialog } from "./BoardDialog";
@@ -11,6 +12,7 @@ import { DependencyDialog } from "./DependencyDialog";
 import { GanttView } from "./GanttView";
 import { InstallButton } from "./InstallButton";
 import { OrbitMark } from "./LoginScreen";
+import { MemberSummary } from "./MemberSummary";
 import { MembersDialog } from "./MembersDialog";
 import { ghostBtn } from "./Modal";
 import { OrbitBackdrop } from "./OrbitBackdrop";
@@ -62,6 +64,7 @@ export function BoardScreen({
   } | null>(null);
   const [membersOpen, setMembersOpen] = useState(false);
   const [view, setView] = useState<"board" | "timeline">("board");
+  const [personKey, setPersonKey] = useState(EVERYONE);
   const [notesOpen, setNotesOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +105,27 @@ export function BoardScreen({
       label: `${member.name} · ${member.email}${member.uid ? "" : " (not joined yet)"}`,
     })),
   ];
+  const cardIds = new Set(cards.map((card) => card.id));
+  const boardTasks = board.dependencies.filter((item) => cardIds.has(item.cardId));
+  const summaries = summarizeMembers(
+    [
+      { id: OWNER_ASSIGNEE, name: ownerName, detail: "Board owner", isYou: isOwner },
+      ...members.map((member) => ({
+        id: member.id,
+        name: member.name,
+        detail: member.uid ? member.email : `${member.email} · not joined yet`,
+        isYou: member.id === myMemberId,
+      })),
+    ],
+    boardTasks,
+    today,
+  );
+  const selectedPerson = summaries.find((summary) => summary.key === personKey) ?? null;
+  const timelineTasks = selectedPerson ? selectedPerson.tasks.map((item) => item.task) : boardTasks;
+  const openTask = (dependency: Dependency) => {
+    const card = cards.find((item) => item.id === dependency.cardId);
+    if (card) setDependencyDialog({ card, dependency, readOnly: !canEdit(dependency) });
+  };
 
   useEffect(() => () => dragCleanup.current?.(), []);
 
@@ -339,13 +363,26 @@ export function BoardScreen({
       ) : null}
 
       {view === "timeline" ? (
-        <GanttView
-          cards={cards}
-          dependencies={board.dependencies}
-          today={today}
-          ownerName={(card) => (card.isSelf && !isOwner ? ownerName : card.name)}
-          onOpen={(card, dependency) => setDependencyDialog({ card, dependency, readOnly: !canEdit(dependency) })}
-        />
+        <div className="relative flex min-h-0 flex-1 flex-col lg:flex-row">
+          <GanttView
+            cards={cards}
+            dependencies={timelineTasks}
+            today={today}
+            ownerName={(card) => (card.isSelf && !isOwner ? ownerName : card.name)}
+            onOpen={(_card, dependency) => openTask(dependency)}
+            emptyMessage={selectedPerson ? `${selectedPerson.name} has no tasks on this board.` : undefined}
+          />
+          {boardTasks.length ? (
+            <MemberSummary
+              summaries={summaries}
+              selected={personKey}
+              boardName={active?.name ?? "Board"}
+              today={today}
+              onSelect={setPersonKey}
+              onOpen={openTask}
+            />
+          ) : null}
+        </div>
       ) : (
         <section className="relative flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-3 pb-4 sm:px-5">
           {cards.map((card) => {
@@ -453,6 +490,17 @@ export function BoardScreen({
                             >
                               {dependency.name}
                             </button>
+                            {editable ? (
+                              <button
+                                type="button"
+                                aria-label={`Edit ${dependency.name}`}
+                                title="Edit task"
+                                className="mt-0.5 shrink-0 rounded p-0.5 text-white/45 hover:bg-white/10 hover:text-white"
+                                onClick={() => setDependencyDialog({ card, dependency })}
+                              >
+                                <PencilIcon />
+                              </button>
+                            ) : null}
                             <label className="sr-only" htmlFor={`status-${dependency.id}`}>
                               Status for {dependency.name}
                             </label>
@@ -728,6 +776,19 @@ export function BoardScreen({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path
+        d="M9.5 2.2l2.3 2.3-7 7H2.5V9.2l7-7z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

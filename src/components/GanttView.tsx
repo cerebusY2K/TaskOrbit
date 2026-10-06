@@ -38,12 +38,14 @@ export function GanttView({
   today,
   ownerName,
   onOpen,
+  emptyMessage = "No tasks on this board yet. Add tasks with From and To dates to see them on the timeline.",
 }: {
   cards: Card[];
   dependencies: Dependency[];
   today: string;
   ownerName: (card: Card) => string;
   onOpen: (card: Card, task: Dependency) => void;
+  emptyMessage?: string;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const [visibleDays, setVisibleDays] = useState(0);
@@ -98,14 +100,14 @@ export function GanttView({
 
   if (groups.length === 0) {
     return (
-      <div className="glass-panel mx-3 rounded-2xl px-5 py-10 text-center text-sm text-white/60 sm:mx-5">
-        No tasks on this board yet. Add tasks with From and To dates to see them on the timeline.
+      <div className="min-w-0 flex-1 px-3 sm:px-5">
+        <div className="glass-panel rounded-2xl px-5 py-10 text-center text-sm text-white/60">{emptyMessage}</div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-4 sm:px-5">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 px-3 pb-4 sm:px-5">
       <div className="glass-panel flex min-h-0 overflow-hidden rounded-2xl">
         <div ref={scroller} className="relative min-h-0 flex-1 overflow-auto">
           <div className="relative" style={{ width: LABEL + width }}>
