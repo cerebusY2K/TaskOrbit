@@ -8,6 +8,7 @@ import { OWNER_ASSIGNEE, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/
 import { BoardDialog } from "./BoardDialog";
 import { CardDialog } from "./CardDialog";
 import { DependencyDialog } from "./DependencyDialog";
+import { GanttView } from "./GanttView";
 import { OrbitMark } from "./LoginScreen";
 import { MembersDialog } from "./MembersDialog";
 import { ghostBtn } from "./Modal";
@@ -58,6 +59,7 @@ export function BoardScreen({
     readOnly?: boolean;
   } | null>(null);
   const [membersOpen, setMembersOpen] = useState(false);
+  const [view, setView] = useState<"board" | "timeline">("board");
   const [notesOpen, setNotesOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +78,12 @@ export function BoardScreen({
   const active = workspaces.find((item) => item.id === activeBoardId) ?? workspaces[0];
   const cards = board.cards
     .filter((card) => card.boardId === active?.id)
-    .sort((a, b) => Number(b.isSelf) - Number(a.isSelf) || a.createdAt.localeCompare(b.createdAt));
+    .sort(
+      (a, b) =>
+        Number(Boolean(a.isDone)) - Number(Boolean(b.isDone)) ||
+        Number(b.isSelf) - Number(a.isSelf) ||
+        a.createdAt.localeCompare(b.createdAt),
+    );
   const uid = board.user.uid;
   const isOwner = !active || active.ownerId === uid;
   const ownerName = isOwner ? board.user.name : (active.ownerName ?? "Board owner");
@@ -202,6 +209,9 @@ export function BoardScreen({
         method: "PATCH",
         body: JSON.stringify({ status }),
       });
+      const from = board.cards.find((item) => item.id === dependency.cardId);
+      if (status === "done" && !from?.isDone) setToast(`"${dependency.name}" moved to Done.`);
+      if (status !== "done" && from?.isDone) setToast(`"${dependency.name}" reopened.`);
       await onReload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update the status.");
@@ -297,6 +307,21 @@ export function BoardScreen({
             Edit board
           </button>
         ) : null}
+        <div role="group" aria-label="View" className="ml-auto flex shrink-0 rounded-full bg-white/5 p-0.5">
+          {(["board", "timeline"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={view === option}
+              className={`rounded-full px-3 py-1 text-sm transition ${
+                view === option ? "bg-white/15 font-medium text-white" : "text-white/60 hover:text-white"
+              }`}
+              onClick={() => setView(option)}
+            >
+              {option === "board" ? "Board" : "Timeline"}
+            </button>
+          ))}
+        </div>
       </nav>
 
       {error ? (
@@ -310,183 +335,202 @@ export function BoardScreen({
         </p>
       ) : null}
 
-      <section className="relative flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-3 pb-4 sm:px-5">
-        {cards.map((card) => {
-          const dependencies = sortDependencies(
-            board.dependencies.filter((item) => item.cardId === card.id),
-            today,
-          );
-          const openCount = dependencies.filter((item) => item.status !== "done").length;
-          const dropping = drag?.overCardId === card.id && drag.fromCardId !== card.id;
-          return (
-            <article
-              key={card.id}
-              data-card-id={card.id}
-              aria-label={`Card ${card.name}`}
-              className={`glass-panel flex max-h-full w-[320px] shrink-0 flex-col rounded-2xl ${dropping ? "ring-2 ring-white/70" : ""}`}
-              onDragOver={(event) => {
-                event.preventDefault();
-                if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-                setDrag((current) => (current ? { ...current, overCardId: card.id } : current));
-              }}
-            >
-              <div className="flex items-start gap-2.5 px-3 pb-1 pt-3">
-                <span
-                  className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ background: card.color, boxShadow: `0 0 10px ${card.color}` }}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="truncate text-sm font-semibold">{card.isSelf && !isOwner ? ownerName : card.name}</h2>
-                    {card.isSelf && isOwner ? (
-                      <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-medium text-white/70">You</span>
-                    ) : null}
+      {view === "timeline" ? (
+        <GanttView
+          cards={cards}
+          dependencies={board.dependencies}
+          today={today}
+          ownerName={(card) => (card.isSelf && !isOwner ? ownerName : card.name)}
+          onOpen={(card, dependency) => setDependencyDialog({ card, dependency, readOnly: !canEdit(dependency) })}
+        />
+      ) : (
+        <section className="relative flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-3 pb-4 sm:px-5">
+          {cards.map((card) => {
+            const dependencies = sortDependencies(
+              board.dependencies.filter((item) => item.cardId === card.id),
+              today,
+            );
+            const openCount = dependencies.filter((item) => item.status !== "done").length;
+            const dropping = drag?.overCardId === card.id && drag.fromCardId !== card.id;
+            return (
+              <article
+                key={card.id}
+                data-card-id={card.id}
+                aria-label={`Card ${card.name}`}
+                className={`glass-panel flex max-h-full w-[320px] shrink-0 flex-col rounded-2xl ${card.isDone ? "order-2" : ""} ${
+                  dropping ? "ring-2 ring-white/70" : ""
+                }`}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+                  setDrag((current) => (current ? { ...current, overCardId: card.id } : current));
+                }}
+              >
+                <div className="flex items-start gap-2.5 px-3 pb-1 pt-3">
+                  <span
+                    className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ background: card.color, boxShadow: `0 0 10px ${card.color}` }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="truncate text-sm font-semibold">{card.isSelf && !isOwner ? ownerName : card.name}</h2>
+                      {card.isDone ? (
+                        <span className="rounded bg-[#22b07d]/20 px-1.5 py-0.5 text-[11px] font-medium text-[#7be0b5]">Auto</span>
+                      ) : null}
+                      {card.isSelf && isOwner ? (
+                        <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-medium text-white/70">You</span>
+                      ) : null}
+                    </div>
+                    <p className="truncate text-xs text-white/50">
+                      {card.isDone ? `${dependencies.length} finished` : `${openCount} open`}
+                    </p>
                   </div>
-                  <p className="truncate text-xs text-white/50">{openCount} open</p>
+                  {isOwner && !card.isDone ? (
+                    <button
+                      type="button"
+                      className="rounded-md px-2 py-1 text-xs font-medium text-white/55 hover:bg-white/10 hover:text-white"
+                      onClick={() => setCardDialog(card)}
+                    >
+                      Edit
+                    </button>
+                  ) : null}
                 </div>
-                {isOwner ? (
-                  <button
-                    type="button"
-                    className="rounded-md px-2 py-1 text-xs font-medium text-white/55 hover:bg-white/10 hover:text-white"
-                    onClick={() => setCardDialog(card)}
-                  >
-                    Edit
-                  </button>
-                ) : null}
-              </div>
-              <ul className="flex min-h-[12px] flex-1 flex-col gap-2 overflow-y-auto px-2 py-2">
-                {dependencies.length === 0 ? (
-                  <li className="rounded-xl border border-dashed border-white/10 px-2 py-4 text-center text-xs text-white/40">
-                    Drop a task here
-                  </li>
-                ) : (
-                  dependencies.map((dependency) => {
-                    const overdue = isOverdue(dependency.deadline, dependency.status, today);
-                    const dueToday = dependency.deadline === today && dependency.status !== "done";
-                    const dragging = drag?.id === dependency.id;
-                    const editable = canEdit(dependency);
-                    const mine = assignedToMe(dependency);
-                    return (
-                      <li
-                        key={dependency.id}
-                        className={`rounded-xl border bg-white/[0.04] px-2 py-2 transition hover:bg-white/[0.07] ${
-                          overdue ? "dep-urgent border-[#ff6b57]/70" : "border-white/10"
-                        } ${dragging ? "opacity-40" : ""}`}
-                      >
-                        <div className="flex items-start gap-2">
-                          {isOwner ? (
+                <ul className="flex min-h-[12px] flex-1 flex-col gap-2 overflow-y-auto px-2 py-2">
+                  {dependencies.length === 0 ? (
+                    <li className="rounded-xl border border-dashed border-white/10 px-2 py-4 text-center text-xs text-white/40">
+                      {card.isDone ? "Tasks marked done land here" : "Drop a task here"}
+                    </li>
+                  ) : (
+                    dependencies.map((dependency) => {
+                      const overdue = isOverdue(dependency.deadline, dependency.status, today);
+                      const dueToday = dependency.deadline === today && dependency.status !== "done";
+                      const dragging = drag?.id === dependency.id;
+                      const editable = canEdit(dependency);
+                      const mine = assignedToMe(dependency);
+                      return (
+                        <li
+                          key={dependency.id}
+                          className={`rounded-xl border bg-white/[0.04] px-2 py-2 transition hover:bg-white/[0.07] ${
+                            overdue ? "dep-urgent border-[#ff6b57]/70" : "border-white/10"
+                          } ${dragging ? "opacity-40" : ""}`}
+                        >
+                          <div className="flex items-start gap-2">
+                            {isOwner ? (
+                              <button
+                                type="button"
+                                draggable
+                                aria-label={`Drag ${dependency.name} to another card`}
+                                className="mt-0.5 cursor-grab touch-none text-white/35 hover:text-white/70 active:cursor-grabbing"
+                                onPointerDown={(event) => beginDrag(event, dependency)}
+                                onDragStart={(event) => {
+                                  event.dataTransfer.setData("text/plain", dependency.id);
+                                  event.dataTransfer.effectAllowed = "move";
+                                  setDrag({
+                                    id: dependency.id,
+                                    name: dependency.name,
+                                    fromCardId: dependency.cardId,
+                                    x: event.clientX,
+                                    y: event.clientY,
+                                    overCardId: null,
+                                  });
+                                }}
+                                onDragEnd={() => setDrag(null)}
+                              >
+                                <GripIcon />
+                              </button>
+                            ) : (
+                              <span aria-hidden className="w-[14px] shrink-0" />
+                            )}
                             <button
                               type="button"
-                              draggable
-                              aria-label={`Drag ${dependency.name} to another card`}
-                              className="mt-0.5 cursor-grab touch-none text-white/35 hover:text-white/70 active:cursor-grabbing"
-                              onPointerDown={(event) => beginDrag(event, dependency)}
-                              onDragStart={(event) => {
-                                event.dataTransfer.setData("text/plain", dependency.id);
-                                event.dataTransfer.effectAllowed = "move";
-                                setDrag({
-                                  id: dependency.id,
-                                  name: dependency.name,
-                                  fromCardId: dependency.cardId,
-                                  x: event.clientX,
-                                  y: event.clientY,
-                                  overCardId: null,
-                                });
-                              }}
-                              onDragEnd={() => setDrag(null)}
+                              className={`min-w-0 flex-1 text-left text-sm font-medium ${
+                                dependency.status === "done" ? "text-white/40 line-through" : "text-white"
+                              }`}
+                              onClick={() => setDependencyDialog({ card, dependency, readOnly: !editable })}
                             >
-                              <GripIcon />
+                              {dependency.name}
                             </button>
-                          ) : (
-                            <span aria-hidden className="w-[14px] shrink-0" />
-                          )}
-                          <button
-                            type="button"
-                            className={`min-w-0 flex-1 text-left text-sm font-medium ${
-                              dependency.status === "done" ? "text-white/40 line-through" : "text-white"
-                            }`}
-                            onClick={() => setDependencyDialog({ card, dependency, readOnly: !editable })}
-                          >
-                            {dependency.name}
-                          </button>
-                          <label className="sr-only" htmlFor={`status-${dependency.id}`}>
-                            Status for {dependency.name}
-                          </label>
-                          <select
-                            id={`status-${dependency.id}`}
-                            aria-label={`Status for ${dependency.name}`}
-                            className="max-w-[7.2rem] rounded-md border border-white/15 bg-[#0b1430] px-1 py-0.5 text-xs text-white/85"
-                            value={dependency.status}
-                            disabled={!editable}
-                            onChange={(event) => changeStatus(dependency, event.target.value as Status)}
-                          >
-                            {STATUSES.map((status) => (
-                              <option key={status} value={status}>
-                                {STATUS_LABELS[status]}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 pl-6 text-xs text-white/55">
-                          {overdue ? (
-                            <span className="font-semibold text-clay">Overdue · {formatDay(dependency.deadline!)}</span>
+                            <label className="sr-only" htmlFor={`status-${dependency.id}`}>
+                              Status for {dependency.name}
+                            </label>
+                            <select
+                              id={`status-${dependency.id}`}
+                              aria-label={`Status for ${dependency.name}`}
+                              className="max-w-[7.2rem] rounded-md border border-white/15 bg-[#0b1430] px-1 py-0.5 text-xs text-white/85"
+                              value={dependency.status}
+                              disabled={!editable}
+                              onChange={(event) => changeStatus(dependency, event.target.value as Status)}
+                            >
+                              {STATUSES.map((status) => (
+                                <option key={status} value={status}>
+                                  {STATUS_LABELS[status]}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 pl-6 text-xs text-white/55">
+                            {overdue ? (
+                              <span className="font-semibold text-clay">Overdue · {formatDay(dependency.deadline!)}</span>
+                            ) : null}
+                            {dueToday ? <span className="font-semibold text-clay">Due today</span> : null}
+                            {dependency.startDate && dependency.deadline && !overdue && !dueToday ? (
+                              <span>
+                                {formatDay(dependency.startDate)} – {formatDay(dependency.deadline)}
+                              </span>
+                            ) : dependency.startDate && !dependency.deadline ? (
+                              <span>From {formatDay(dependency.startDate)}</span>
+                            ) : dependency.deadline && !overdue && !dueToday ? (
+                              <span>Due {formatDay(dependency.deadline)}</span>
+                            ) : null}
+                            {dependency.dependantOnLabel ? <span>Depends on {dependency.dependantOnLabel}</span> : null}
+                            {mine ? (
+                              <span className="font-medium text-[#8fb3ff]">Assigned to you</span>
+                            ) : dependency.taskOwner ? (
+                              <span>Owner {dependency.taskOwner}</span>
+                            ) : null}
+                            {dependency.priority ? <span>{PRIORITY_LABELS[dependency.priority]}</span> : null}
+                            {dependency.waitingFor ? <span>Waiting for {dependency.waitingFor}</span> : null}
+                            {dependency.blocks ? <span>Blocks {dependency.blocks}</span> : null}
+                            {dependency.nextAction ? <span>Next: {dependency.nextAction}</span> : null}
+                            <span>Updated {formatDay(todayISO(new Date(dependency.updatedAt)))}</span>
+                            {dependency.assignedByUid !== dependency.ownerId ? (
+                              <span>Added by {dependency.assignedByName}</span>
+                            ) : null}
+                          </div>
+                          {dependency.notes ? <p className="mt-1 line-clamp-2 pl-6 text-xs text-white/55">{dependency.notes}</p> : null}
+                          {dependency.status === "hold" && dependency.holdReason ? (
+                            <p className="mt-1 pl-6 text-xs text-[#ffd27a]">Hold: {dependency.holdReason}</p>
                           ) : null}
-                          {dueToday ? <span className="font-semibold text-clay">Due today</span> : null}
-                          {dependency.startDate && dependency.deadline && !overdue && !dueToday ? (
-                            <span>
-                              {formatDay(dependency.startDate)} – {formatDay(dependency.deadline)}
-                            </span>
-                          ) : dependency.startDate && !dependency.deadline ? (
-                            <span>From {formatDay(dependency.startDate)}</span>
-                          ) : dependency.deadline && !overdue && !dueToday ? (
-                            <span>Due {formatDay(dependency.deadline)}</span>
-                          ) : null}
-                          {dependency.dependantOnLabel ? <span>Depends on {dependency.dependantOnLabel}</span> : null}
-                          {mine ? (
-                            <span className="font-medium text-[#8fb3ff]">Assigned to you</span>
-                          ) : dependency.taskOwner ? (
-                            <span>Owner {dependency.taskOwner}</span>
-                          ) : null}
-                          {dependency.priority ? <span>{PRIORITY_LABELS[dependency.priority]}</span> : null}
-                          {dependency.waitingFor ? <span>Waiting for {dependency.waitingFor}</span> : null}
-                          {dependency.blocks ? <span>Blocks {dependency.blocks}</span> : null}
-                          {dependency.nextAction ? <span>Next: {dependency.nextAction}</span> : null}
-                          <span>Updated {formatDay(todayISO(new Date(dependency.updatedAt)))}</span>
-                          {dependency.assignedByUid !== dependency.ownerId ? (
-                            <span>Added by {dependency.assignedByName}</span>
-                          ) : null}
-                        </div>
-                        {dependency.notes ? <p className="mt-1 line-clamp-2 pl-6 text-xs text-white/55">{dependency.notes}</p> : null}
-                        {dependency.status === "hold" && dependency.holdReason ? (
-                          <p className="mt-1 pl-6 text-xs text-[#ffd27a]">Hold: {dependency.holdReason}</p>
-                        ) : null}
-                      </li>
-                    );
-                  })
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
+                {card.isDone ? null : (
+                  <div className="px-2 pb-2">
+                    <button
+                      type="button"
+                      className="w-full rounded-lg px-2 py-2 text-left text-sm font-medium text-white/55 hover:bg-white/5 hover:text-white"
+                      onClick={() => setDependencyDialog({ card })}
+                    >
+                      + Add a task
+                    </button>
+                  </div>
                 )}
-              </ul>
-              <div className="px-2 pb-2">
-                <button
-                  type="button"
-                  className="w-full rounded-lg px-2 py-2 text-left text-sm font-medium text-white/55 hover:bg-white/5 hover:text-white"
-                  onClick={() => setDependencyDialog({ card })}
-                >
-                  + Add a task
-                </button>
-              </div>
-            </article>
-          );
-        })}
-        {isOwner ? (
-          <button
-            type="button"
-            className="h-fit w-[300px] shrink-0 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-3 py-3 text-left text-sm font-medium text-white/60 transition hover:bg-white/[0.07] hover:text-white"
-            onClick={() => setCardDialog("new")}
-          >
-            + Add a card
-          </button>
-        ) : null}
-      </section>
+              </article>
+            );
+          })}
+          {isOwner ? (
+            <button
+              type="button"
+              className="order-1 h-fit w-[300px] shrink-0 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-3 py-3 text-left text-sm font-medium text-white/60 transition hover:bg-white/[0.07] hover:text-white"
+              onClick={() => setCardDialog("new")}
+            >
+              + Add a card
+            </button>
+          ) : null}
+        </section>
+      )}
       {drag ? (
         <div
           className="glass-panel pointer-events-none fixed z-50 w-56 rounded-lg px-3 py-2 text-sm font-medium text-white"

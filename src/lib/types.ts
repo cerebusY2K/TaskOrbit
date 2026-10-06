@@ -69,6 +69,7 @@ export type Card = {
   name: string;
   color: string;
   isSelf: boolean;
+  isDone?: boolean;
   assigneeEmail: string | null;
   createdAt: string;
   updatedAt: string;
@@ -88,6 +89,7 @@ export type Dependency = {
   holdReason: string | null;
   taskOwner: string | null;
   assigneeMemberId: string | null;
+  doneFromCardId: string | null;
   priority: Priority | null;
   waitingFor: string | null;
   blocks: string | null;

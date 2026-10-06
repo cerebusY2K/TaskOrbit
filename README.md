@@ -2,6 +2,8 @@
 
 Private boards of cards. Each board has its own background color. Each card holds tasks with an owner, status (open, on hold, in progress, done), priority, from and to dates, depends on, waiting for, blocks, next action, and notes. The last update is recorded automatically whenever the task changes. On hold requires a reason. A task whose To date has passed shakes until it is marked done.
 
+Every board has a Done card. Marking a task done moves it there; reopening it moves it back to the card it came from. Switch a board to Timeline for a Gantt chart of its tasks by From and To date.
+
 Every account starts with a Main board and a Me card. Cards you create are visible only to you. Share an invite link from the board; the other person opens it and signs in with Google.
 
 ## Run it locally

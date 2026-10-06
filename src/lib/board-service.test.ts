@@ -53,8 +53,39 @@ describe("board", () => {
       service.createDependency(sam, { cardId: card.id, name: "Nope", status: "open" }),
     ).rejects.toThrow(/not found/i);
     const samBoard = await service.board(sam);
-    expect(samBoard.cards.map((item) => item.name)).toEqual(["Me"]);
+    expect(samBoard.cards.filter((item) => !item.isDone).map((item) => item.name)).toEqual(["Me"]);
     expect(samBoard.dependencies).toHaveLength(0);
+  });
+
+  it("gives every board a Done card that done tasks move into and out of", async () => {
+    const { service } = setup();
+    await service.signIn(ada);
+    const first = await service.board(ada);
+    for (const board of first.boards) {
+      expect(first.cards.filter((card) => card.boardId === board.id && card.isDone)).toHaveLength(1);
+    }
+    const launch = await service.createBoard(ada, { name: "Launch" });
+    const card = await service.createCard(ada, { name: "API", boardId: launch.id });
+    const done = (await service.board(ada)).cards.find((item) => item.boardId === launch.id && item.isDone)!;
+    expect(done.name).toBe("Done");
+    await expect(service.deleteCard(ada, done.id)).rejects.toThrow(/Done card/);
+
+    const task = await service.createDependency(ada, { cardId: card.id, name: "Ship", status: "wip" });
+    const finished = await service.updateDependency(ada, task.dependency.id, { status: "done" });
+    expect(finished.cardId).toBe(done.id);
+    expect(finished.doneFromCardId).toBe(card.id);
+    const reopened = await service.updateDependency(ada, task.dependency.id, { status: "open" });
+    expect(reopened.cardId).toBe(card.id);
+    expect(reopened.doneFromCardId).toBeNull();
+
+    const dropped = await service.moveDependency(ada, task.dependency.id, done.id);
+    expect(dropped.status).toBe("done");
+    const pulled = await service.moveDependency(ada, task.dependency.id, card.id);
+    expect(pulled.status).toBe("open");
+
+    const createdDone = await service.createDependency(ada, { cardId: card.id, name: "Already done", status: "done" });
+    const stored = (await service.board(ada)).dependencies.find((item) => item.id === createdDone.dependency.id)!;
+    expect(stored.cardId).toBe(done.id);
   });
 
   it("requires a reason on hold and keeps the other statuses", async () => {
@@ -134,7 +165,7 @@ describe("board", () => {
     const adaBoard = await service.board(ada);
     expect(adaBoard.dependencies.map((item) => item.name)).toEqual(["Send the contract"]);
     expect(adaBoard.dependencies[0]?.id).toBe(created.dependency.id);
-    expect(adaBoard.cards.map((item) => item.name)).toEqual(["Me", "Sam"]);
+    expect(adaBoard.cards.filter((item) => !item.isDone).map((item) => item.name)).toEqual(["Me", "Sam"]);
   });
 
   it("reuses one invite link per board and joins it once", async () => {

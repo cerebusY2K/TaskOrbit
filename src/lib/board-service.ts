@@ -22,6 +22,8 @@ export const DEFAULT_BOARDS = [
   { name: "Ideas", color: "#ff5c8a" },
 ] as const;
 
+export const DONE_CARD_COLOR = "#2f6b45";
+
 function now() {
   return new Date().toISOString();
 }
@@ -63,6 +65,7 @@ export class BoardService {
       const owner = await this.store.getUser(board.ownerId);
       boards.push(fillBoard(board, owner?.name ?? "Board owner"));
       const boardCards = await this.store.listCardsByBoard(board.id);
+      if (!boardCards.some((card) => card.isDone)) boardCards.push(await this.doneCard(board));
       cards.push(...boardCards);
       for (const card of boardCards) dependencies.push(...(await this.store.listDependenciesByCard(card.id)));
     }
@@ -164,7 +167,9 @@ export class BoardService {
       createdAt: now(),
       updatedAt: now(),
     };
-    return this.store.createBoard(board);
+    const created = await this.store.createBoard(board);
+    await this.doneCard(created);
+    return created;
   }
 
   async updateBoard(actor: Actor, boardId: string, input: { name?: unknown; color?: unknown }) {
@@ -226,7 +231,7 @@ export class BoardService {
   ) {
     const card = await this.ownedCard(actor, cardId);
     const patch: Partial<Card> = { updatedAt: now() };
-    if (!card.isSelf && input.name !== undefined) {
+    if (!card.isSelf && !card.isDone && input.name !== undefined) {
       patch.name = assertName(input.name, "Card name");
     }
     if (input.color !== undefined) patch.color = assertColor(input.color, "card color");
@@ -236,6 +241,7 @@ export class BoardService {
   async deleteCard(actor: Actor, cardId: string) {
     const card = await this.ownedCard(actor, cardId);
     if (card.isSelf) throw new BoardError("Your Me card stays on the dashboard.");
+    if (card.isDone) throw new BoardError("Every board keeps its Done card.");
     const dependencies = await this.store.listDependenciesByCard(card.id);
     for (const dependency of dependencies) {
       await this.deleteOwnedDependency(actor, dependency);
@@ -281,10 +287,11 @@ export class BoardService {
       deadline: draft.deadline,
       dependantOnId: draft.dependantOnId,
       dependantOnLabel: draft.dependantOnLabel,
-      status: draft.status,
-      holdReason: draft.holdReason,
+      status: card.isDone ? "done" : draft.status,
+      holdReason: card.isDone ? null : draft.holdReason,
       taskOwner: assignee.taskOwner,
       assigneeMemberId: assignee.assigneeMemberId,
+      doneFromCardId: null,
       priority: draft.priority,
       waitingFor: draft.waitingFor,
       blocks: draft.blocks,
@@ -299,6 +306,7 @@ export class BoardService {
     };
     await this.store.createDependency(dependency);
     await this.notifyAssignee(actor, board, dependency, null);
+    if (dependency.status === "done") await this.placeForStatus(dependency);
     const saved = (await this.store.getDependency(dependency.id)) ?? dependency;
     return { dependency: saved };
   }
@@ -357,6 +365,8 @@ export class BoardService {
       updatedAt: timestamp,
     });
     await this.notifyAssignee(actor, board, updated, dependency.assigneeMemberId ?? null);
+    const statusChanged = draft.status !== dependency.status;
+    const placed = statusChanged ? await this.placeForStatus(updated) : updated;
     const linked = await this.store.listDependenciesByLink(dependency.linkId);
     const isSource = dependency.ownerId === dependency.assignedByUid;
     for (const other of linked) {
@@ -376,6 +386,10 @@ export class BoardService {
         ...(isSource ? { dependantOnLabel: draft.dependantOnLabel } : {}),
         updatedAt: timestamp,
       });
+      if (statusChanged) {
+        const synced = await this.store.getDependency(other.id);
+        if (synced) await this.placeForStatus(synced);
+      }
     }
     if (draft.name !== dependency.name) {
       for (const sibling of siblings) {
@@ -387,7 +401,7 @@ export class BoardService {
         }
       }
     }
-    return updated;
+    return placed;
   }
 
   async deleteDependency(actor: Actor, dependencyId: string) {
@@ -459,31 +473,14 @@ export class BoardService {
     if (source.boardId !== card.boardId) {
       throw new BoardError("Drop a task on a card in the same board.");
     }
-
-    const destination = await this.store.listDependenciesByCard(card.id);
-    const parentStays = Boolean(
-      dependency.dependantOnId && !destination.some((item) => item.id === dependency.dependantOnId),
-    );
-    const timestamp = now();
-    const updated = await this.store.updateDependency(dependency.id, {
-      cardId: card.id,
-      originCardName: card.name,
-      dependantOnId: parentStays ? null : dependency.dependantOnId,
-      dependantOnLabel: dependency.dependantOnLabel,
-      updatedAt: timestamp,
-    });
-
-    const leftBehind = await this.store.listDependenciesByCard(dependency.cardId);
-    for (const sibling of leftBehind) {
-      if (sibling.dependantOnId !== dependency.id) continue;
-      await this.store.updateDependency(sibling.id, {
-        dependantOnId: null,
-        dependantOnLabel: sibling.dependantOnLabel || dependency.name,
-        updatedAt: timestamp,
-      });
+    const patch: Partial<Dependency> = {};
+    if (card.isDone && !source.isDone) {
+      Object.assign(patch, { status: "done", holdReason: null, doneFromCardId: source.id });
+    } else if (!card.isDone && source.isDone) {
+      Object.assign(patch, { doneFromCardId: null, ...(dependency.status === "done" ? { status: "open" } : {}) });
     }
-
-    return (await this.store.getDependency(dependency.id)) ?? updated;
+    await this.relocate(dependency, card, patch);
+    return fillDependency((await this.store.getDependency(dependency.id)) ?? dependency);
   }
 
   async markNotificationRead(actor: Actor, notificationId: string) {
@@ -519,19 +516,91 @@ export class BoardService {
       if (!card.boardId) await this.store.updateCard(card.id, { boardId: home.id });
     }
     const refreshed = await this.store.listCards(user.uid);
-    if (refreshed.some((card) => card.isSelf)) return home;
-    await this.store.createCard({
-      id: id(),
-      ownerId: user.uid,
-      boardId: home.id,
-      name: "Me",
-      color: defaultCardColor(),
-      isSelf: true,
-      assigneeEmail: null,
-      createdAt: now(),
-      updatedAt: now(),
-    });
+    if (!refreshed.some((card) => card.isSelf)) {
+      await this.store.createCard({
+        id: id(),
+        ownerId: user.uid,
+        boardId: home.id,
+        name: "Me",
+        color: defaultCardColor(),
+        isSelf: true,
+        assigneeEmail: null,
+        createdAt: now(),
+        updatedAt: now(),
+      });
+    }
+    for (const board of boards) {
+      if (!refreshed.some((card) => card.boardId === board.id && card.isDone)) await this.doneCard(board);
+    }
     return home;
+  }
+
+  private async doneCard(board: Board) {
+    const cards = await this.store.listCardsByBoard(board.id);
+    const existing = cards.find((card) => card.isDone);
+    if (existing) return existing;
+    const stamp = now();
+    const done = await this.store.createCard({
+      id: `${board.id}-done`,
+      ownerId: board.ownerId,
+      boardId: board.id,
+      name: "Done",
+      color: DONE_CARD_COLOR,
+      isSelf: false,
+      isDone: true,
+      assigneeEmail: null,
+      createdAt: stamp,
+      updatedAt: stamp,
+    });
+    for (const card of cards) {
+      for (const task of await this.store.listDependenciesByCard(card.id)) {
+        if (task.status === "done") await this.relocate(task, done, { doneFromCardId: card.id });
+      }
+    }
+    return done;
+  }
+
+  private async placeForStatus(task: Dependency) {
+    const card = await this.store.getCard(task.cardId);
+    if (!card) return task;
+    if (task.status === "done" && !card.isDone) {
+      const board = await this.store.getBoard(card.boardId);
+      if (!board) return task;
+      return this.relocate(task, await this.doneCard(board), { doneFromCardId: card.id });
+    }
+    if (task.status !== "done" && card.isDone) {
+      const cards = (await this.store.listCardsByBoard(card.boardId)).filter((item) => !item.isDone);
+      const back =
+        cards.find((item) => item.id === task.doneFromCardId) ??
+        cards.find((item) => item.isSelf) ??
+        [...cards].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
+      if (!back) return task;
+      return this.relocate(task, back, { doneFromCardId: null });
+    }
+    return task;
+  }
+
+  private async relocate(task: Dependency, target: Card, patch: Partial<Dependency> = {}) {
+    const timestamp = now();
+    if (task.cardId === target.id) return this.store.updateDependency(task.id, { ...patch, updatedAt: timestamp });
+    const destination = await this.store.listDependenciesByCard(target.id);
+    const parentStays = Boolean(task.dependantOnId && !destination.some((item) => item.id === task.dependantOnId));
+    const updated = await this.store.updateDependency(task.id, {
+      cardId: target.id,
+      originCardName: target.name,
+      dependantOnId: parentStays ? null : task.dependantOnId,
+      ...patch,
+      updatedAt: timestamp,
+    });
+    for (const sibling of await this.store.listDependenciesByCard(task.cardId)) {
+      if (sibling.dependantOnId !== task.id) continue;
+      await this.store.updateDependency(sibling.id, {
+        dependantOnId: null,
+        dependantOnLabel: sibling.dependantOnLabel || task.name,
+        updatedAt: timestamp,
+      });
+    }
+    return updated;
   }
 
   private async ownedBoard(actor: Actor, boardId: string) {
@@ -652,6 +721,7 @@ function fillDependency(item: Dependency): Dependency {
     ...item,
     taskOwner: item.taskOwner ?? null,
     assigneeMemberId: item.assigneeMemberId ?? null,
+    doneFromCardId: item.doneFromCardId ?? null,
     priority: item.priority ?? null,
     waitingFor: item.waitingFor ?? null,
     blocks: item.blocks ?? null,
