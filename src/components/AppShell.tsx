@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type BoardPayload, type PublicConfig } from "@/lib/api-client";
 import { clientAuth, warmAuth } from "@/lib/firebase-client";
+import { isNativeApp, nativeSignOut } from "@/lib/native";
 import { BoardOrbit } from "./BoardOrbit";
 import { BoardScreen } from "./BoardScreen";
 import { LoginScreen } from "./LoginScreen";
@@ -18,6 +19,7 @@ export function AppShell() {
 
   const signOut = useCallback(async () => {
     await api("/api/auth/logout", { method: "POST" });
+    await nativeSignOut();
     setOpenBoardId(null);
     setBoard(null);
   }, []);
@@ -35,7 +37,7 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
-    if (!config?.firebase) return;
+    if (!config?.firebase || isNativeApp()) return;
     void warmAuth(clientAuth(config.firebase));
   }, [config]);
 

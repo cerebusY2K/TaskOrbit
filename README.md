@@ -43,3 +43,19 @@ The build runs the test suite before `next build`. Do not deploy until `npm test
 To check the live database, run `FIRESTORE_SMOKE=1 FIREBASE_SERVICE_ACCOUNT_PATH=secrets/taskorbit-service-account.json npx vitest run src/lib/firestore-store.smoke.test.ts`. It creates two throwaway users and deletes everything it wrote.
 
 Health check: `/api/health`.
+
+## Phone apps
+
+The site installs as an app from the browser (Install button, or Share, Add to Home Screen on iPhone). Notifications can be pushed to the phone from the bell menu.
+
+`native/` holds the Android and iOS apps (Capacitor). They open the hosted site, sign in with the native Google sheet, and receive push notifications through Firebase Cloud Messaging. The site address comes from `TASKORB_URL` (default: the Render host).
+
+```bash
+cd native
+npm install
+TASKORB_URL=https://taskorb.app npx cap sync
+npx cap open android   # Android Studio: Build, Generate Signed App Bundle
+npx cap open ios       # Xcode: pick your team under Signing, then Product, Archive
+```
+
+Gradle 8.14 needs Java 21; Android Studio's bundled Java 25 is too new. Each signing key's SHA-1 and SHA-256 must be added to the Firebase Android app (`app.taskorb`) or Google sign-in fails. iOS push needs an APNs key uploaded under Firebase, Project settings, Cloud Messaging.

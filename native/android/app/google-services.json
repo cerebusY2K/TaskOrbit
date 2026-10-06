@@ -1,0 +1,163 @@
+{
+  "project_info": {
+    "project_number": "700230349035",
+    "firebase_url": "https://gocorona-52deb.firebaseio.com",
+    "project_id": "gocorona-52deb",
+    "storage_bucket": "gocorona-52deb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700230349035:android:2a82f95efc769d6ffeceae",
+        "android_client_info": {
+          "package_name": "app.taskorb"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "700230349035-lpmkcc9g3qu0apd39ang2943u0bmhpq7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.taskorb",
+            "certificate_hash": "c68678870650161ef0033d947f8e053ed3f52b49"
+          }
+        },
+        {
+          "client_id": "700230349035-voo2rkhpji01f2orj02jcsgtqaijjd81.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcfzfnvdvt5S3xP3w-QlCSjK-YSKyapBo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "700230349035-voo2rkhpji01f2orj02jcsgtqaijjd81.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "700230349035-d6cmsn9ffpvfc0jn271hp6n4in7kep2p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.taskorb"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700230349035:android:8a6b57d3507a0c80feceae",
+        "android_client_info": {
+          "package_name": "com.serbus.demo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "700230349035-voo2rkhpji01f2orj02jcsgtqaijjd81.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcfzfnvdvt5S3xP3w-QlCSjK-YSKyapBo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "700230349035-voo2rkhpji01f2orj02jcsgtqaijjd81.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "700230349035-d6cmsn9ffpvfc0jn271hp6n4in7kep2p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.taskorb"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700230349035:android:4f47045ded88f142feceae",
+        "android_client_info": {
+          "package_name": "com.thirtytwocare.gocoronago"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "700230349035-voo2rkhpji01f2orj02jcsgtqaijjd81.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcfzfnvdvt5S3xP3w-QlCSjK-YSKyapBo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "700230349035-voo2rkhpji01f2orj02jcsgtqaijjd81.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "700230349035-d6cmsn9ffpvfc0jn271hp6n4in7kep2p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.taskorb"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700230349035:android:46837d06f2d6c154feceae",
+        "android_client_info": {
+          "package_name": "com.thirtytwocare.sampark"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "700230349035-voo2rkhpji01f2orj02jcsgtqaijjd81.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcfzfnvdvt5S3xP3w-QlCSjK-YSKyapBo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "700230349035-voo2rkhpji01f2orj02jcsgtqaijjd81.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "700230349035-d6cmsn9ffpvfc0jn271hp6n4in7kep2p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.taskorb"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

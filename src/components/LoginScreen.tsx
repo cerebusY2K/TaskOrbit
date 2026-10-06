@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api, type PublicConfig } from "@/lib/api-client";
 import { clientAuth, consumeGoogleRedirect, friendlyAuthError, googleIdToken, warmAuth } from "@/lib/firebase-client";
+import { isNativeApp, nativeGoogleIdToken } from "@/lib/native";
 import { OrbitBackdrop } from "./OrbitBackdrop";
 
 export function LoginScreen({
@@ -20,7 +21,7 @@ export function LoginScreen({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!config.firebase) return;
+    if (!config.firebase || isNativeApp()) return;
     const auth = clientAuth(config.firebase);
     let active = true;
     void warmAuth(auth);
@@ -50,7 +51,7 @@ export function LoginScreen({
     setBusy(true);
     setError(null);
     try {
-      const token = await googleIdToken(clientAuth(config.firebase));
+      const token = isNativeApp() ? await nativeGoogleIdToken() : await googleIdToken(clientAuth(config.firebase));
       if (!token) return;
       await api("/api/auth/firebase", {
         method: "POST",

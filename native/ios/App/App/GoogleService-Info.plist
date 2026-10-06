@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>700230349035-d6cmsn9ffpvfc0jn271hp6n4in7kep2p.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.700230349035-d6cmsn9ffpvfc0jn271hp6n4in7kep2p</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDggj7cp4_TVf6RmtnJJwnmi8vRzZuJDgg</string>
+	<key>GCM_SENDER_ID</key>
+	<string>700230349035</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>app.taskorb</string>
+	<key>PROJECT_ID</key>
+	<string>gocorona-52deb</string>
+	<key>STORAGE_BUCKET</key>
+	<string>gocorona-52deb.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:700230349035:ios:df6f545881f6b8b5feceae</string>
+	<key>DATABASE_URL</key>
+	<string>https://gocorona-52deb.firebaseio.com</string>
+</dict>
+</plist>
