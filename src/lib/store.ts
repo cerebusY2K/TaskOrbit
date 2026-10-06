@@ -6,6 +6,7 @@ import type {
   InviteRecord,
   OutboxMessage,
   PendingAssignment,
+  PushDevice,
   UserProfile,
 } from "./types";
 
@@ -51,6 +52,10 @@ export interface Store {
   findInviteByBoard(boardId: string): Promise<InviteRecord | null>;
   updateInvite(id: string, patch: Partial<InviteRecord>): Promise<InviteRecord>;
   saveOutbox(message: OutboxMessage): Promise<void>;
+
+  savePushDevice(device: PushDevice): Promise<void>;
+  listPushDevices(uid: string): Promise<PushDevice[]>;
+  deletePushDevice(id: string): Promise<void>;
 }
 
 export type StoreSnapshot = {
@@ -62,6 +67,7 @@ export type StoreSnapshot = {
   pending: PendingAssignment[];
   invites: InviteRecord[];
   outbox: OutboxMessage[];
+  pushDevices?: PushDevice[];
 };
 
 export class MemoryStore implements Store {
@@ -73,6 +79,7 @@ export class MemoryStore implements Store {
   pending = new Map<string, PendingAssignment>();
   invites: InviteRecord[] = [];
   outbox: OutboxMessage[] = [];
+  pushDevices = new Map<string, PushDevice>();
   onChange?: () => void;
 
   private touch() {
@@ -88,6 +95,7 @@ export class MemoryStore implements Store {
     this.pending = new Map(snapshot.pending.map((item) => [item.id, item]));
     this.invites = snapshot.invites;
     this.outbox = snapshot.outbox;
+    this.pushDevices = new Map((snapshot.pushDevices ?? []).map((item) => [item.id, item]));
   }
 
   dump(): StoreSnapshot {
@@ -100,6 +108,7 @@ export class MemoryStore implements Store {
       pending: [...this.pending.values()],
       invites: this.invites,
       outbox: this.outbox,
+      pushDevices: [...this.pushDevices.values()],
     };
   }
 
@@ -315,6 +324,20 @@ export class MemoryStore implements Store {
 
   async saveOutbox(message: OutboxMessage) {
     this.outbox.push(message);
+    this.touch();
+  }
+
+  async savePushDevice(device: PushDevice) {
+    this.pushDevices.set(device.id, device);
+    this.touch();
+  }
+
+  async listPushDevices(uid: string) {
+    return [...this.pushDevices.values()].filter((device) => device.uid === uid);
+  }
+
+  async deletePushDevice(id: string) {
+    this.pushDevices.delete(id);
     this.touch();
   }
 }

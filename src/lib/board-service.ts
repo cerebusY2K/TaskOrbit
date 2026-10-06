@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from "crypto";
+import { createHash, randomBytes, randomUUID } from "crypto";
 import {
   assertColor,
   assertDependencyDraft,
@@ -8,8 +8,9 @@ import {
   normalizeEmail,
 } from "./domain";
 import { BoardError } from "./errors";
+import type { Pusher } from "./push";
 import type { Store } from "./store";
-import type { Board, BoardMember, Card, Dependency, SessionUser, UserProfile } from "./types";
+import type { Board, BoardMember, Card, Dependency, PushDevice, SessionUser, UserProfile } from "./types";
 import { OWNER_ASSIGNEE } from "./types";
 
 type Actor = SessionUser;
@@ -36,7 +37,44 @@ export class BoardService {
   constructor(
     private store: Store,
     private appUrl: string,
+    private pusher: Pusher | null = null,
   ) {}
+
+  pushPublicKey() {
+    return this.pusher?.publicKey ?? null;
+  }
+
+  async registerPush(
+    actor: Actor,
+    input: { kind?: unknown; subscription?: unknown; token?: unknown; platform?: unknown },
+  ) {
+    let device: PushDevice;
+    if (input.kind === "fcm") {
+      if (typeof input.token !== "string" || input.token.length < 20 || input.token.length > 4096) {
+        throw new BoardError("Missing push token.");
+      }
+      const platform = input.platform === "ios" || input.platform === "android" ? input.platform : "android";
+      device = { id: deviceId(input.token), uid: actor.uid, kind: "fcm", endpoint: null, keys: null, token: input.token, platform, createdAt: now() };
+    } else {
+      const subscription = input.subscription as { endpoint?: unknown; keys?: { p256dh?: unknown; auth?: unknown } } | null;
+      const endpoint = subscription?.endpoint;
+      const p256dh = subscription?.keys?.p256dh;
+      const auth = subscription?.keys?.auth;
+      if (typeof endpoint !== "string" || !endpoint.startsWith("https://") || typeof p256dh !== "string" || typeof auth !== "string") {
+        throw new BoardError("That push subscription is not valid.");
+      }
+      device = { id: deviceId(endpoint), uid: actor.uid, kind: "web", endpoint, keys: { p256dh, auth }, token: null, platform: "web", createdAt: now() };
+    }
+    await this.store.savePushDevice(device);
+    return { id: device.id };
+  }
+
+  async unregisterPush(actor: Actor, input: { endpoint?: unknown; token?: unknown }) {
+    const key = typeof input.token === "string" ? input.token : typeof input.endpoint === "string" ? input.endpoint : null;
+    if (!key) return;
+    const target = (await this.store.listPushDevices(actor.uid)).find((device) => device.id === deviceId(key));
+    if (target) await this.store.deletePushDevice(target.id);
+  }
 
   async signIn(input: SessionUser): Promise<UserProfile> {
     const email = assertEmail(input.email);
@@ -683,6 +721,14 @@ export class BoardService {
 
   private async notify(userId: string, title: string, body: string, dependencyId: string | null = null) {
     await this.store.createNotification({ id: id(), userId, title, body, dependencyId, read: false, createdAt: now() });
+    if (this.pusher) void this.deliver(userId, title, body).catch(() => undefined);
+  }
+
+  private async deliver(userId: string, title: string, body: string) {
+    const devices = await this.store.listPushDevices(userId);
+    if (!devices.length || !this.pusher) return;
+    const dead = await this.pusher.send(devices, { title, body, url: "/" });
+    for (const deviceId of dead) await this.store.deletePushDevice(deviceId);
   }
 
   private async deleteOwnedDependency(actor: Actor, dependency: Dependency) {
@@ -706,6 +752,10 @@ export class BoardService {
     if (!invite) throw new BoardError("This invite link is not valid.", 404);
     return invite;
   }
+}
+
+function deviceId(key: string) {
+  return createHash("sha256").update(key).digest("base64url").slice(0, 32);
 }
 
 function inviteToken() {

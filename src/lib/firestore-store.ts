@@ -12,6 +12,7 @@ import type {
   InviteRecord,
   OutboxMessage,
   PendingAssignment,
+  PushDevice,
   UserProfile,
 } from "./types";
 
@@ -309,5 +310,18 @@ export class FirestoreStore implements Store {
 
   async saveOutbox(message: OutboxMessage) {
     await this.collection("mailOutbox").doc(message.id).set(message);
+  }
+
+  async savePushDevice(device: PushDevice) {
+    await this.collection("pushDevices").doc(device.id).set(device);
+  }
+
+  async listPushDevices(uid: string) {
+    const snap = await this.collection("pushDevices").where("uid", "==", uid).get();
+    return snap.docs.map((doc) => doc.data() as PushDevice);
+  }
+
+  async deletePushDevice(id: string) {
+    await this.collection("pushDevices").doc(id).delete();
   }
 }

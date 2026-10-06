@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { isOverdue, todayISO } from "@/lib/domain";
 import type { Board, BoardPayload, Dependency } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
+import { InstallButton } from "./InstallButton";
 import { OrbitMark } from "./LoginScreen";
 import { clamp, drawTail, easeOutCubic, GOLDEN, pointOn, setupCanvas, tiltFor, toRgb } from "./orbit-math";
 
@@ -173,13 +174,16 @@ export function BoardOrbit({
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          className="rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/20"
-          onClick={onSignOut}
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <InstallButton className="rounded-md bg-[#4d84ff] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[#3b70f0]" />
+          <button
+            type="button"
+            className="rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/20"
+            onClick={onSignOut}
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
       <div

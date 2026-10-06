@@ -88,6 +88,39 @@ describe("board", () => {
     expect(stored.cardId).toBe(done.id);
   });
 
+  it("pushes notifications to registered devices and drops expired ones", async () => {
+    const store = new MemoryStore();
+    const sent: { ids: string[]; title: string }[] = [];
+    let expire = false;
+    const pusher = {
+      publicKey: "test-key",
+      async send(devices: { id: string }[], message: { title: string }) {
+        sent.push({ ids: devices.map((device) => device.id), title: message.title });
+        return expire ? devices.map((device) => device.id) : [];
+      },
+    };
+    const service = new BoardService(store, "https://depend.example", pusher);
+    await service.signIn(ada);
+    await service.signIn(sam);
+    expect(service.pushPublicKey()).toBe("test-key");
+    await expect(service.registerPush(sam, { kind: "web", subscription: { endpoint: "http://x" } })).rejects.toThrow();
+    await service.registerPush(sam, {
+      kind: "web",
+      subscription: { endpoint: "https://push.example/abc", keys: { p256dh: "p", auth: "a" } },
+    });
+    const work = (await service.board(ada)).boards[0]!;
+    const member = await service.addMember(ada, work.id, { name: "Sam", email: "sam@example.com" });
+    const { url } = await service.boardInvite(ada, work.id);
+    await service.acceptInvite(sam, url.split("/").pop()!);
+    const me = (await service.board(ada)).cards.find((card) => card.isSelf)!;
+    sent.length = 0;
+    expire = true;
+    await service.createDependency(ada, { cardId: me.id, name: "Push me", status: "open", assigneeMemberId: member.id });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(sent.map((item) => item.title)).toEqual(["New task for you"]);
+    expect(await store.listPushDevices("sam")).toHaveLength(0);
+  });
+
   it("requires a reason on hold and keeps the other statuses", async () => {
     const { service } = setup();
     await service.signIn(ada);

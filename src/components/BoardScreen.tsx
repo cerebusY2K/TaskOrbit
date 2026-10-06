@@ -9,10 +9,12 @@ import { BoardDialog } from "./BoardDialog";
 import { CardDialog } from "./CardDialog";
 import { DependencyDialog } from "./DependencyDialog";
 import { GanttView } from "./GanttView";
+import { InstallButton } from "./InstallButton";
 import { OrbitMark } from "./LoginScreen";
 import { MembersDialog } from "./MembersDialog";
 import { ghostBtn } from "./Modal";
 import { OrbitBackdrop } from "./OrbitBackdrop";
+import { PushToggle } from "./PushToggle";
 import { toRgb } from "./orbit-math";
 
 function formatDay(iso: string) {
@@ -273,6 +275,7 @@ export function BoardScreen({
               <span className="ml-1.5 rounded-full bg-[#4d84ff] px-1.5 py-0.5 text-[11px] font-semibold text-white">{unread}</span>
             ) : null}
           </button>
+          <InstallButton className={barBtn} />
           <button type="button" className={barBtn} onClick={onSignOut}>
             Sign out
           </button>
@@ -678,6 +681,7 @@ export function BoardScreen({
                 Close
               </button>
             </div>
+            <PushToggle />
             {unread > 0 ? (
               <button
                 type="button"

@@ -113,6 +113,17 @@ export type AppNotification = {
   createdAt: string;
 };
 
+export type PushDevice = {
+  id: string;
+  uid: string;
+  kind: "web" | "fcm";
+  endpoint: string | null;
+  keys: { p256dh: string; auth: string } | null;
+  token: string | null;
+  platform: string;
+  createdAt: string;
+};
+
 export type PendingAssignment = {
   id: string;
   email: string;
