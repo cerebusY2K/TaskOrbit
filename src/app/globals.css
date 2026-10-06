@@ -28,8 +28,61 @@ body {
   animation: dep-vibrate 0.28s linear infinite;
 }
 
+.globe-space {
+  background:
+    radial-gradient(60% 50% at 50% 45%, rgba(56, 108, 220, 0.28), transparent 70%),
+    radial-gradient(120% 120% at 50% -20%, #13204a, #04060f 60%);
+}
+
+.globe-orbits {
+  transition: opacity 1.2s ease;
+}
+
+.globe-orbit {
+  transform-box: view-box;
+  transform-origin: center;
+}
+
+.globe-orbit-1 {
+  animation: orbit-swirl 2.8s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+  --tilt: -18deg;
+}
+
+.globe-orbit-2 {
+  animation: orbit-swirl 2.8s cubic-bezier(0.22, 0.7, 0.3, 1) both reverse;
+  --tilt: 24deg;
+}
+
+.globe-orbit-3 {
+  animation: orbit-swirl 2.8s cubic-bezier(0.22, 0.7, 0.3, 1) 0.1s both;
+  --tilt: 62deg;
+}
+
+.globe-orbits-settled {
+  opacity: 0.22;
+}
+
+@keyframes orbit-swirl {
+  from {
+    transform: rotate(calc(var(--tilt) - 540deg)) scale(0.6);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  to {
+    transform: rotate(var(--tilt)) scale(1);
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dep-urgent {
     animation: none;
+  }
+
+  .globe-orbit {
+    animation: none;
+    transform: rotate(var(--tilt));
   }
 }

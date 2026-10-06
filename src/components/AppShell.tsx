@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type BoardPayload, type PublicConfig } from "@/lib/api-client";
 import { clientAuth, warmAuth } from "@/lib/firebase-client";
+import { BoardGlobe } from "./BoardGlobe";
 import { BoardScreen } from "./BoardScreen";
 import { LoginScreen } from "./LoginScreen";
 
@@ -11,6 +12,15 @@ export function AppShell() {
   const [board, setBoard] = useState<BoardPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [openBoardId, setOpenBoardId] = useState<string | null>(null);
+
+  const openBoard = useCallback((boardId: string) => setOpenBoardId(boardId), []);
+
+  const signOut = useCallback(async () => {
+    await api("/api/auth/logout", { method: "POST" });
+    setOpenBoardId(null);
+    setBoard(null);
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -74,14 +84,17 @@ export function AppShell() {
       </>
     );
   }
+  if (!openBoardId) {
+    return <BoardGlobe payload={board} onOpen={openBoard} onSignOut={signOut} />;
+  }
   return (
     <BoardScreen
+      key={openBoardId}
       board={board}
+      initialBoardId={openBoardId}
       onReload={refresh}
-      onSignOut={async () => {
-        await api("/api/auth/logout", { method: "POST" });
-        setBoard(null);
-      }}
+      onSignOut={signOut}
+      onShowGlobe={() => setOpenBoardId(null)}
     />
   );
 }
