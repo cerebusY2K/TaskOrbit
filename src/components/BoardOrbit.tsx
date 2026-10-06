@@ -5,30 +5,49 @@ import { isOverdue, todayISO } from "@/lib/domain";
 import type { Board, BoardPayload, Dependency } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 
-type Item = { board: Board; ring: number; offset: number; open: number; overdue: number; tasks: Dependency[] };
+type Item = {
+  board: Board;
+  reach: number;
+  tilt: number;
+  lap: number;
+  offset: number;
+  rgb: string;
+  open: number;
+  overdue: number;
+  tasks: Dependency[];
+};
 
 const INTRO_MS = 1800;
 const OPEN_MS = 420;
 const LAP_MS = 42000;
 const SLOW = 0.04;
+const TAIL = 1.1;
+const TAIL_STEPS = 28;
+const TILTS = [-10, 16, -22, 6, 26, -16, 20, -4, 12, -26];
+const GOLDEN = Math.PI * (3 - Math.sqrt(5));
 
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+function toRgb(hex: string) {
+  const value = Number.parseInt(hex.replace("#", "").padEnd(6, "0").slice(0, 6), 16);
+  return Number.isNaN(value) ? "120, 170, 255" : `${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}`;
+}
+
 function buildItems(payload: BoardPayload): Item[] {
   const boards = [...payload.boards].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  const rings = boards.length <= 3 ? 1 : boards.length <= 7 ? 2 : 3;
   const today = todayISO();
   return boards.map((board, index) => {
-    const ring = index % rings;
-    const onRing = boards.filter((_, i) => i % rings === ring).length;
-    const slot = Math.floor(index / rings);
+    const reach = boards.length === 1 ? 1 : 0.38 + (0.62 * index) / (boards.length - 1);
     const cardIds = new Set(payload.cards.filter((card) => card.boardId === board.id).map((card) => card.id));
     const tasks = payload.dependencies.filter((item) => cardIds.has(item.cardId) && item.status !== "done");
     return {
       board,
-      ring,
-      offset: (slot / onRing) * Math.PI * 2 + ring * 0.9,
+      reach,
+      tilt: (TILTS[index % TILTS.length]! * Math.PI) / 180,
+      lap: LAP_MS * (0.45 + reach),
+      offset: index * GOLDEN,
+      rgb: toRgb(board.color),
       open: tasks.length,
       overdue: tasks.filter((item) => isOverdue(item.deadline, item.status, today)).length,
       tasks: tasks.slice(0, 3),
@@ -46,8 +65,8 @@ export function BoardOrbit({
   onSignOut: () => void;
 }) {
   const items = useMemo(() => buildItems(payload), [payload]);
-  const rings = Math.max(1, ...items.map((item) => item.ring + 1));
   const stageRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const cardRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [hovered, setHovered] = useState(-1);
@@ -66,17 +85,32 @@ export function BoardOrbit({
     return () => observer.disconnect();
   }, []);
 
-  function ringSize(ring: number) {
+  function orbitOf(item: Item) {
     const { width, height } = box;
-    const k = rings === 1 ? 1 : 0.55 + (0.45 * ring) / (rings - 1);
     const portrait = height > width;
-    const rx = clamp(width / 2 - (portrait ? 75 : 110), 60, 620) * k;
-    const ry = Math.min(Math.max(50, height / 2 - 80) * k, rx * (portrait ? 2.6 : 0.42));
-    return { rx, ry };
+    const rx = clamp(width / 2 - (portrait ? 75 : 110), 60, 620) * item.reach;
+    const ry = Math.min(Math.max(50, height / 2 - 80) * item.reach, rx * (portrait ? 2.6 : 0.42));
+    return { rx, ry, tilt: portrait ? item.tilt * 0.4 : item.tilt };
+  }
+
+  function pointOn(orbit: { rx: number; ry: number; tilt: number }, angle: number, grow: number) {
+    const ex = Math.cos(angle) * orbit.rx * grow;
+    const ey = Math.sin(angle) * orbit.ry * grow;
+    const cos = Math.cos(orbit.tilt);
+    const sin = Math.sin(orbit.tilt);
+    return { x: ex * cos - ey * sin, y: ex * sin + ey * cos, depth: (Math.sin(angle) + 1) / 2 };
   }
 
   useEffect(() => {
     if (box.width === 0) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(box.width * dpr);
+    canvas.height = Math.round(box.height * dpr);
+    const cx = box.width / 2;
+    const cy = box.height / 2;
     const state = live.current;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     items.forEach((item, index) => {
@@ -100,6 +134,12 @@ export function BoardOrbit({
         setSettled(true);
       }
 
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, box.width, box.height);
+      ctx.lineCap = "butt";
+      ctx.shadowBlur = 12;
+      const appear = clamp(intro * 2, 0, 1);
+
       items.forEach((item, index) => {
         const card = cardRefs.current[index];
         if (!card) return;
@@ -108,25 +148,39 @@ export function BoardOrbit({
         const targetScale = focus === index ? 1.14 : 1;
         state.speeds[index]! += (targetSpeed - state.speeds[index]!) * Math.min(1, dt / 220);
         state.scales[index]! += (targetScale - state.scales[index]!) * Math.min(1, dt / 140);
-        const lap = LAP_MS * (1 + item.ring * 0.45);
-        state.angles[index]! += ((Math.PI * 2) / lap) * dt * state.speeds[index]!;
+        state.angles[index]! += ((Math.PI * 2) / item.lap) * dt * state.speeds[index]!;
 
-        const { rx, ry } = ringSize(item.ring);
+        const orbit = orbitOf(item);
         const spin = (1 - grow) * Math.PI * 2.4;
         const angle = state.angles[index]! - spin;
-        const x = Math.cos(angle) * rx * grow;
-        const y = Math.sin(angle) * ry * grow;
-        const depth = (Math.sin(angle) + 1) / 2;
+        const { x, y, depth } = pointOn(orbit, angle, grow);
         const scale = (0.78 + 0.22 * depth) * state.scales[index]! * (0.4 + 0.6 * grow);
         const fade = focus !== -1 && focus !== index ? 0.55 : 1;
         card.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})`;
-        card.style.opacity = String((0.5 + 0.5 * depth) * fade * clamp(intro * 2, 0, 1));
+        card.style.opacity = String((0.5 + 0.5 * depth) * fade * appear);
         card.style.zIndex = String(focus === index ? 1000 : Math.round(depth * 100));
+
+        const motion = reduced ? 0.35 : 0.2 + 0.8 * Math.min(1, state.speeds[index]!) + (1 - grow) * 1.6;
+        const length = TAIL * motion;
+        ctx.shadowColor = `rgba(${item.rgb}, ${0.7 * fade * appear})`;
+        let prev = { x, y };
+        for (let step = 1; step <= TAIL_STEPS; step++) {
+          const t = step / TAIL_STEPS;
+          const point = pointOn(orbit, angle - length * t, grow);
+          const alpha = (1 - t) ** 1.4 * 0.9 * fade * appear * (0.55 + 0.45 * point.depth);
+          ctx.strokeStyle = `rgba(${item.rgb}, ${alpha})`;
+          ctx.lineWidth = Math.max(0.5, 8 * (1 - t) * (0.7 + 0.3 * point.depth));
+          ctx.beginPath();
+          ctx.moveTo(cx + prev.x, cy + prev.y);
+          ctx.lineTo(cx + point.x, cy + point.y);
+          ctx.stroke();
+          prev = point;
+        }
       });
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-    // ringSize reads box/rings, both covered here.
+    // orbitOf/pointOn read box, which is covered here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [box, items]);
 
@@ -169,23 +223,29 @@ export function BoardOrbit({
       >
         {box.width > 0 ? (
           <svg aria-hidden className="pointer-events-none absolute inset-0 h-full w-full">
-            {Array.from({ length: rings }, (_, ring) => {
-              const { rx, ry } = ringSize(ring);
+            {items.map((item, index) => {
+              const { rx, ry, tilt } = orbitOf(item);
+              const dim = hovered !== -1 && hovered !== index;
               return (
                 <ellipse
-                  key={ring}
+                  key={item.board.id}
                   cx={box.width / 2}
                   cy={box.height / 2}
                   rx={rx}
                   ry={ry}
+                  transform={`rotate(${(tilt * 180) / Math.PI} ${box.width / 2} ${box.height / 2})`}
                   fill="none"
-                  stroke="rgba(150, 190, 255, 0.24)"
+                  stroke={`rgb(${item.rgb})`}
+                  strokeOpacity={dim ? 0.08 : hovered === index ? 0.45 : 0.2}
                   strokeDasharray="2 6"
+                  className="transition-[stroke-opacity] duration-300"
                 />
               );
             })}
           </svg>
         ) : null}
+
+        <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />
 
         <div className="orbit-core pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full" />
 
