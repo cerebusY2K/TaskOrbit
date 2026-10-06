@@ -1,4 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#0f6e6e"/>
-  <text x="16" y="22" text-anchor="middle" font-size="16" font-family="Georgia" fill="#fffdf9">D</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="80%">
+      <stop offset="0%" stop-color="#1d3170"/>
+      <stop offset="100%" stop-color="#060a18"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#9cc0ff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#4d84ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tail" gradientUnits="userSpaceOnUse" x1="27.7" y1="22.2" x2="51.2" y2="25.6">
+      <stop offset="0%" stop-color="#ff9f43" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#ff9f43"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <g transform="rotate(-24 32 32)">
+    <ellipse cx="32" cy="32" rx="25" ry="10" fill="none" stroke="#6da2ff" stroke-opacity="0.8" stroke-width="3"/>
+    <circle cx="32" cy="32" r="14" fill="url(#glow)"/>
+    <circle cx="32" cy="32" r="5.5" fill="#f2f6ff"/>
+    <path d="M27.7 22.2 A25 10 0 0 1 51.2 25.6" fill="none" stroke="url(#tail)" stroke-width="3.6"/>
+    <circle cx="51.2" cy="25.6" r="4.8" fill="#ff9f43"/>
+    <circle cx="50" cy="24.4" r="1.6" fill="#ffe2c2"/>
+  </g>
 </svg>
