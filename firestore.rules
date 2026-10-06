@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // The web client does not query Firestore. The Next.js server uses the
+    // Admin SDK, which bypasses these rules, and only after checking the
+    // signed-in user. These rules exist so the public web config cannot read
+    // or write any document.
+    //
+    // Collection: users/{uid}
+    //   uid, email, name, createdAt: string
+    //   photoURL: string or null
+    //
+    // Collection: boards/{boardId}
+    //   id, ownerId, name, color, createdAt, updatedAt: string
+    //
+    // Collection: cards/{cardId}
+    //   id, ownerId, boardId, name, color, createdAt, updatedAt: string
+    //   isSelf: bool
+    //
+    // Collection: dependencies/{dependencyId}
+    //   id, ownerId, cardId, linkId, name, createdAt, updatedAt: string
+    //   deadline, dependantOnId, dependantOnLabel, holdReason: string or null
+    //   taskOwner, priority, waitingFor, blocks, nextAction, lastUpdate, notes: string or null
+    //   status: "open" | "hold" | "wip" | "done"
+    //
+    // Collection: notifications/{notificationId}
+    //   id, userId, title, body, createdAt: string
+    //   dependencyId: string or null
+    //   read: bool
+    //
+    // Collection: invites/{id}
+    //   token, fromUid, fromName, createdAt: string
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

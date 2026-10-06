@@ -1,0 +1,14 @@
+node_modules
+.tools
+.next
+.env
+.env.local
+secrets
+data
+docs/firestore-findings.md
+*.log
+.DS_Store
+tsconfig.tsbuildinfo
+firestore-debug.log
+firebase-debug.log
+ui-debug.log

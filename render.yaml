@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: hitch
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --include=dev && npm test && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22.21.0
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: APP_URL
+        sync: false
+      - key: FIREBASE_API_KEY
+        value: AIzaSyApuky1-PsecZKV-YgqwskSZ8v6A82bKuw
+      - key: FIREBASE_AUTH_DOMAIN
+        value: gocorona-52deb.firebaseapp.com
+      - key: FIREBASE_PROJECT_ID
+        value: gocorona-52deb
+      - key: FIREBASE_APP_ID
+        value: 1:700230349035:web:bd16e308268ae8bafeceae
+      - key: FIREBASE_MESSAGING_SENDER_ID
+        value: "700230349035"
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
