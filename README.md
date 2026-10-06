@@ -1,4 +1,4 @@
-# Hitch
+# TaskOrbit
 
 Private boards of cards. Each board has its own background color. Each card holds tasks with an owner, status (open, on hold, in progress, done), priority, due date, depends on, waiting for, blocks, next action, last update, and notes. On hold requires a reason. A task whose due date has passed shakes until it is marked done.
 
@@ -36,6 +36,6 @@ Add the `onrender.com` host under Firebase Authentication, Settings, Authorized 
 
 The build runs the test suite before `next build`. Do not deploy until `npm test` passes locally.
 
-To check the live database, run `FIRESTORE_SMOKE=1 FIREBASE_SERVICE_ACCOUNT_PATH=secrets/hitch-service-account.json npx vitest run src/lib/firestore-store.smoke.test.ts`. It creates two throwaway users and deletes everything it wrote.
+To check the live database, run `FIRESTORE_SMOKE=1 FIREBASE_SERVICE_ACCOUNT_PATH=secrets/taskorbit-service-account.json npx vitest run src/lib/firestore-store.smoke.test.ts`. It creates two throwaway users and deletes everything it wrote.
 
 Health check: `/api/health`.

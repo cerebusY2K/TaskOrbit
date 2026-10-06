@@ -61,7 +61,7 @@ export function InviteGate({ token }: { token: string }) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
         <section className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-          <p className="text-sm font-semibold text-[#0c66e4]">Hitch</p>
+          <p className="text-sm font-semibold text-[#0c66e4]">TaskOrbit</p>
           <p role="alert" className="mt-3 text-sm text-clay">
             {error || config?.message || "This invite link is not valid."}
           </p>
@@ -74,7 +74,7 @@ export function InviteGate({ token }: { token: string }) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
         <section className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-          <p className="text-sm font-semibold text-[#0c66e4]">Hitch</p>
+          <p className="text-sm font-semibold text-[#0c66e4]">TaskOrbit</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#172b4d]">
             {fromName} invited you
           </h1>

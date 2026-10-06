@@ -34,7 +34,7 @@ export function InviteDialog({ onClose, onCopied }: { onClose: () => void; onCop
       <div className="grid gap-4">
         <p className="text-sm text-[#5e564c]">
           Copy this link and send it however you like. When someone opens it and signs in with
-          Google, they join Hitch and you both get a notification. Their board stays private.
+          Google, they join TaskOrbit and you both get a notification. Their board stays private.
         </p>
         <label className="block text-sm font-medium text-[#4d463d]">
           Invite link

@@ -10,7 +10,7 @@ const ada: SessionUser = { uid: `${run}-ada`, email: `${run}-ada@example.com`, n
 const sam: SessionUser = { uid: `${run}-sam`, email: `${run}-sam@example.com`, name: "Sam", photoURL: null };
 
 describe.skipIf(!enabled)("Firestore store against the live database", () => {
-  const service = new BoardService(new FirestoreStore(), "https://hitch.example");
+  const service = new BoardService(new FirestoreStore(), "https://taskorbit.example");
 
   afterAll(async () => {
     const db = getFirestore(getAdminApp());
@@ -73,7 +73,7 @@ describe.skipIf(!enabled)("Firestore store against the live database", () => {
     expect(other.cards.some((card) => card.id === api.id)).toBe(false);
     expect(other.dependencies).toHaveLength(0);
 
-    const invite = await service.inviteLink(ada, "https://hitch.example");
+    const invite = await service.inviteLink(ada, "https://taskorbit.example");
     const accepted = await service.acceptInvite(sam, invite.token);
     expect(accepted.status).toBe("accepted");
 

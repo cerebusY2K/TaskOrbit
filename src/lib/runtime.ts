@@ -49,7 +49,7 @@ function fileStore() {
 export function getRuntime() {
   if (dataMode() === "unconfigured") {
     throw new BoardError(
-      "Hitch needs Firebase credentials before it can run in production. Add them on Render, then redeploy.",
+      "TaskOrbit needs Firebase credentials before it can run in production. Add them on Render, then redeploy.",
       503,
     );
   }

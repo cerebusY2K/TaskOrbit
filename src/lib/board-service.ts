@@ -321,7 +321,7 @@ export class BoardService {
       id: id(),
       userId: actor.uid,
       title: "You're in",
-      body: `${invite.fromName} invited you to Hitch. Your board is your own.`,
+      body: `${invite.fromName} invited you to TaskOrbit. Your board is your own.`,
       dependencyId: null,
       read: false,
       createdAt: timestamp,

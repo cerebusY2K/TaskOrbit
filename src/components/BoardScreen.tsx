@@ -193,7 +193,7 @@ export function BoardScreen({
     <div className="flex h-screen min-h-0 flex-col" style={{ background: active?.color ?? "#0c66e4" }}>
       <header className={`flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:px-4 ${light ? "text-[#172b4d]" : "text-white"}`}>
         <div className="min-w-0">
-          <p className="text-lg font-semibold tracking-tight">Hitch</p>
+          <p className="text-lg font-semibold tracking-tight">TaskOrbit</p>
           <p className={`truncate text-xs ${light ? "text-[#172b4d]/70" : "text-white/80"}`}>
             {board.user.name} · drag a task onto another card
           </p>

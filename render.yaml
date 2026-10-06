@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: hitch
+    name: taskorbit
     runtime: node
     plan: free
     region: singapore
