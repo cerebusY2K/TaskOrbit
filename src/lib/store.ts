@@ -15,12 +15,14 @@ export interface Store {
   findUserByEmail(email: string): Promise<UserProfile | null>;
 
   listBoards(ownerId: string): Promise<Board[]>;
+  listSharedBoards(uid: string): Promise<Board[]>;
   getBoard(id: string): Promise<Board | null>;
   createBoard(board: Board): Promise<Board>;
   updateBoard(id: string, patch: Partial<Board>): Promise<Board>;
   deleteBoard(id: string): Promise<void>;
 
   listCards(ownerId: string): Promise<Card[]>;
+  listCardsByBoard(boardId: string): Promise<Card[]>;
   getCard(id: string): Promise<Card | null>;
   createCard(card: Card): Promise<Card>;
   updateCard(id: string, patch: Partial<Card>): Promise<Card>;
@@ -46,6 +48,7 @@ export interface Store {
   createInvite(invite: InviteRecord): Promise<InviteRecord>;
   getInviteByToken(token: string): Promise<InviteRecord | null>;
   findInviteByFrom(uid: string): Promise<InviteRecord | null>;
+  findInviteByBoard(boardId: string): Promise<InviteRecord | null>;
   updateInvite(id: string, patch: Partial<InviteRecord>): Promise<InviteRecord>;
   saveOutbox(message: OutboxMessage): Promise<void>;
 }
@@ -122,6 +125,12 @@ export class MemoryStore implements Store {
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
+  async listSharedBoards(uid: string) {
+    return [...this.boards.values()]
+      .filter((board) => board.memberUids?.includes(uid))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
   async getBoard(id: string) {
     return this.boards.get(id) ?? null;
   }
@@ -149,6 +158,12 @@ export class MemoryStore implements Store {
   async listCards(ownerId: string) {
     return [...this.cards.values()]
       .filter((card) => card.ownerId === ownerId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  async listCardsByBoard(boardId: string) {
+    return [...this.cards.values()]
+      .filter((card) => card.boardId === boardId)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
@@ -275,7 +290,11 @@ export class MemoryStore implements Store {
   }
 
   async findInviteByFrom(uid: string) {
-    return this.invites.find((invite) => invite.fromUid === uid) ?? null;
+    return this.invites.find((invite) => invite.fromUid === uid && !invite.boardId) ?? null;
+  }
+
+  async findInviteByBoard(boardId: string) {
+    return this.invites.find((invite) => invite.boardId === boardId) ?? null;
   }
 
   async updateInvite(id: string, patch: Partial<InviteRecord>) {

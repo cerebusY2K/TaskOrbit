@@ -135,6 +135,13 @@ export class FirestoreStore implements Store {
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
+  async listSharedBoards(uid: string) {
+    const snap = await this.collection("boards").where("memberUids", "array-contains", uid).get();
+    return snap.docs
+      .map((doc) => doc.data() as Board)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
   async getBoard(id: string) {
     const snap = await this.collection("boards").doc(id).get();
     return snap.exists ? (snap.data() as Board) : null;
@@ -158,6 +165,13 @@ export class FirestoreStore implements Store {
 
   async listCards(ownerId: string) {
     const snap = await this.collection("cards").where("ownerId", "==", ownerId).get();
+    return snap.docs
+      .map((doc) => doc.data() as Card)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  async listCardsByBoard(boardId: string) {
+    const snap = await this.collection("cards").where("boardId", "==", boardId).get();
     return snap.docs
       .map((doc) => doc.data() as Card)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -275,7 +289,12 @@ export class FirestoreStore implements Store {
   }
 
   async findInviteByFrom(uid: string) {
-    const snap = await this.collection("invites").where("fromUid", "==", uid).limit(1).get();
+    const snap = await this.collection("invites").where("fromUid", "==", uid).get();
+    return (snap.docs.map((doc) => doc.data() as InviteRecord).find((invite) => !invite.boardId)) ?? null;
+  }
+
+  async findInviteByBoard(boardId: string) {
+    const snap = await this.collection("invites").where("boardId", "==", boardId).limit(1).get();
     return (snap.docs[0]?.data() as InviteRecord | undefined) ?? null;
   }
 

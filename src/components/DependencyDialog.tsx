@@ -5,11 +5,17 @@ import type { Dependency, Priority, Status } from "@/lib/types";
 import { PRIORITIES, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { Field, Modal, fieldClass, ghostBtn, primaryBtn } from "./Modal";
 
+type Assignee = { id: string; label: string };
+
+const TYPED_OWNER = "__typed";
+
 export function DependencyDialog({
   cardName,
   dependency,
   siblings,
   focusHold = false,
+  people,
+  readOnly = false,
   onClose,
   onSubmit,
   onDelete,
@@ -18,6 +24,8 @@ export function DependencyDialog({
   dependency?: Dependency;
   siblings: Dependency[];
   focusHold?: boolean;
+  people: Assignee[];
+  readOnly?: boolean;
   onClose: () => void;
   onSubmit: (input: {
     name: string;
@@ -26,6 +34,7 @@ export function DependencyDialog({
     dependantOnLabel: string | null;
     status: Status;
     holdReason: string;
+    assigneeMemberId: string | null;
     taskOwner: string;
     priority: Priority | "";
     waitingFor: string;
@@ -38,7 +47,8 @@ export function DependencyDialog({
 }) {
   const initialMode = dependency?.dependantOnId ? "existing" : dependency?.dependantOnLabel ? "text" : "none";
   const [name, setName] = useState(dependency?.name ?? "");
-  const [taskOwner, setTaskOwner] = useState(dependency?.taskOwner ?? "");
+  const typedOwner = (dependency && !dependency.assigneeMemberId ? dependency.taskOwner : null) ?? "";
+  const [assignee, setAssignee] = useState(dependency?.assigneeMemberId ?? (typedOwner ? TYPED_OWNER : ""));
   const [deadline, setDeadline] = useState(dependency?.deadline ?? "");
   const [mode, setMode] = useState<"none" | "existing" | "text">(initialMode);
   const [dependantOnId, setDependantOnId] = useState(dependency?.dependantOnId ?? "");
@@ -70,7 +80,8 @@ export function DependencyDialog({
         dependantOnLabel: mode === "text" ? dependantOnLabel : null,
         status,
         holdReason,
-        taskOwner,
+        assigneeMemberId: assignee && assignee !== TYPED_OWNER ? assignee : null,
+        taskOwner: assignee === TYPED_OWNER ? typedOwner : "",
         priority,
         waitingFor,
         blocks,
@@ -87,97 +98,110 @@ export function DependencyDialog({
   }
 
   return (
-    <Modal title={dependency ? "Edit task" : "Add task"} onClose={onClose}>
+    <Modal title={readOnly ? "Task" : dependency ? "Edit task" : "Add task"} onClose={onClose}>
       <form className="grid gap-4" onSubmit={submit}>
-        <p className="text-sm text-white/60">On {cardName}</p>
-        <Field label="Task">
-          <input className={fieldClass} value={name} onChange={(event) => setName(event.target.value)} required />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Owner">
-            <input className={fieldClass} value={taskOwner} onChange={(event) => setTaskOwner(event.target.value)} />
+        <p className="text-sm text-white/60">
+          On {cardName}
+          {readOnly ? " · view only. You can edit tasks you add or that are assigned to you." : ""}
+        </p>
+        <fieldset disabled={readOnly} className="m-0 grid min-w-0 gap-4 border-0 p-0 disabled:opacity-70">
+          <Field label="Task">
+            <input className={fieldClass} value={name} onChange={(event) => setName(event.target.value)} required />
           </Field>
-          <Field label="Priority">
-            <select className={fieldClass} value={priority} onChange={(event) => setPriority(event.target.value as Priority | "")}>
-              <option value="">None</option>
-              {PRIORITIES.map((item) => (
-                <option key={item} value={item}>
-                  {PRIORITY_LABELS[item]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Status">
-            <select className={fieldClass} value={status} onChange={(event) => setStatus(event.target.value as Status)}>
-              {STATUSES.map((item) => (
-                <option key={item} value={item}>
-                  {STATUS_LABELS[item]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Due date">
-            <input className={fieldClass} type="date" value={deadline} onChange={(event) => setDeadline(event.target.value)} />
-          </Field>
-        </div>
-        <Field label="Depends on">
-          <select
-            className={fieldClass}
-            value={mode === "existing" ? dependantOnId : mode}
-            onChange={(event) => {
-              const value = event.target.value;
-              if (value === "none" || value === "text") {
-                setMode(value);
-                setDependantOnId("");
-                return;
-              }
-              setMode("existing");
-              setDependantOnId(value);
-            }}
-          >
-            <option value="none">Nothing</option>
-            {choices.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-            <option value="text">Something else…</option>
-          </select>
-        </Field>
-        {mode === "text" ? (
-          <Field label="What does it depend on?">
-            <input className={fieldClass} value={dependantOnLabel} onChange={(event) => setDependantOnLabel(event.target.value)} />
-          </Field>
-        ) : null}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Waiting for">
-            <input className={fieldClass} value={waitingFor} onChange={(event) => setWaitingFor(event.target.value)} />
-          </Field>
-          <Field label="Blocks">
-            <input className={fieldClass} value={blocks} onChange={(event) => setBlocks(event.target.value)} />
-          </Field>
-        </div>
-        <Field label="Next action">
-          <input className={fieldClass} value={nextAction} onChange={(event) => setNextAction(event.target.value)} />
-        </Field>
-        <Field label="Last update">
-          <input className={fieldClass} type="date" value={lastUpdate} onChange={(event) => setLastUpdate(event.target.value)} />
-        </Field>
-        <Field label="Notes">
-          <textarea className={fieldClass} rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} />
-        </Field>
-        {status === "hold" ? (
-          <Field label="Reason for hold">
-            <textarea
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Owner">
+              <select className={fieldClass} value={assignee} onChange={(event) => setAssignee(event.target.value)}>
+                <option value="">Unassigned</option>
+                {people.map((person) => (
+                  <option key={person.id} value={person.id}>
+                    {person.label}
+                  </option>
+                ))}
+                {typedOwner ? <option value={TYPED_OWNER}>{typedOwner}</option> : null}
+              </select>
+            </Field>
+            <Field label="Priority">
+              <select className={fieldClass} value={priority} onChange={(event) => setPriority(event.target.value as Priority | "")}>
+                <option value="">None</option>
+                {PRIORITIES.map((item) => (
+                  <option key={item} value={item}>
+                    {PRIORITY_LABELS[item]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Status">
+              <select className={fieldClass} value={status} onChange={(event) => setStatus(event.target.value as Status)}>
+                {STATUSES.map((item) => (
+                  <option key={item} value={item}>
+                    {STATUS_LABELS[item]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Due date">
+              <input className={fieldClass} type="date" value={deadline} onChange={(event) => setDeadline(event.target.value)} />
+            </Field>
+          </div>
+          <Field label="Depends on">
+            <select
               className={fieldClass}
-              value={holdReason}
-              required
-              rows={3}
-              autoFocus={focusHold}
-              onChange={(event) => setHoldReason(event.target.value)}
-            />
+              value={mode === "existing" ? dependantOnId : mode}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (value === "none" || value === "text") {
+                  setMode(value);
+                  setDependantOnId("");
+                  return;
+                }
+                setMode("existing");
+                setDependantOnId(value);
+              }}
+            >
+              <option value="none">Nothing</option>
+              {choices.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+              <option value="text">Something else…</option>
+            </select>
           </Field>
-        ) : null}
+          {mode === "text" ? (
+            <Field label="What does it depend on?">
+              <input className={fieldClass} value={dependantOnLabel} onChange={(event) => setDependantOnLabel(event.target.value)} />
+            </Field>
+          ) : null}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Waiting for">
+              <input className={fieldClass} value={waitingFor} onChange={(event) => setWaitingFor(event.target.value)} />
+            </Field>
+            <Field label="Blocks">
+              <input className={fieldClass} value={blocks} onChange={(event) => setBlocks(event.target.value)} />
+            </Field>
+          </div>
+          <Field label="Next action">
+            <input className={fieldClass} value={nextAction} onChange={(event) => setNextAction(event.target.value)} />
+          </Field>
+          <Field label="Last update">
+            <input className={fieldClass} type="date" value={lastUpdate} onChange={(event) => setLastUpdate(event.target.value)} />
+          </Field>
+          <Field label="Notes">
+            <textarea className={fieldClass} rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} />
+          </Field>
+          {status === "hold" ? (
+            <Field label="Reason for hold">
+              <textarea
+                className={fieldClass}
+                value={holdReason}
+                required
+                rows={3}
+                autoFocus={focusHold}
+                onChange={(event) => setHoldReason(event.target.value)}
+              />
+            </Field>
+          ) : null}
+        </fieldset>
         {error ? (
           <p role="alert" className="text-sm text-clay">
             {error}
@@ -207,11 +231,13 @@ export function DependencyDialog({
           )}
           <div className="flex gap-2">
             <button type="button" className={ghostBtn} onClick={onClose}>
-              Cancel
+              {readOnly ? "Close" : "Cancel"}
             </button>
-            <button className={primaryBtn} disabled={busy} type="submit">
-              {busy ? "Saving…" : "Save task"}
-            </button>
+            {readOnly ? null : (
+              <button className={primaryBtn} disabled={busy} type="submit">
+                {busy ? "Saving…" : "Save task"}
+              </button>
+            )}
           </div>
         </div>
       </form>

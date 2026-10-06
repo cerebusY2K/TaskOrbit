@@ -59,6 +59,15 @@ export function AppShell() {
     };
   }, [refresh]);
 
+  useEffect(() => {
+    if (!board) return;
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get("board");
+    if (!requested) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    if (board.boards.some((item) => item.id === requested)) setOpenBoardId(requested);
+  }, [board]);
+
   if (loading) {
     return <p className="px-6 py-10 text-sm text-white/85">Loading your board…</p>;
   }

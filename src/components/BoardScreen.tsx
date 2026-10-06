@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api-client";
 import { isOverdue, todayISO } from "@/lib/domain";
 import type { Board, BoardPayload, Card, Dependency, Status } from "@/lib/types";
-import { PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
+import { OWNER_ASSIGNEE, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { BoardDialog } from "./BoardDialog";
 import { CardDialog } from "./CardDialog";
 import { DependencyDialog } from "./DependencyDialog";
-import { InviteDialog } from "./InviteDialog";
 import { OrbitMark } from "./LoginScreen";
+import { MembersDialog } from "./MembersDialog";
 import { ghostBtn } from "./Modal";
 import { OrbitBackdrop } from "./OrbitBackdrop";
 import { toRgb } from "./orbit-math";
@@ -55,8 +55,9 @@ export function BoardScreen({
     card: Card;
     dependency?: Dependency;
     focusHold?: boolean;
+    readOnly?: boolean;
   } | null>(null);
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,6 +77,22 @@ export function BoardScreen({
   const cards = board.cards
     .filter((card) => card.boardId === active?.id)
     .sort((a, b) => Number(b.isSelf) - Number(a.isSelf) || a.createdAt.localeCompare(b.createdAt));
+  const uid = board.user.uid;
+  const isOwner = !active || active.ownerId === uid;
+  const ownerName = isOwner ? board.user.name : (active.ownerName ?? "Board owner");
+  const members = active?.members ?? [];
+  const myMemberId = members.find((member) => member.uid === uid)?.id ?? null;
+  const assignedToMe = (dependency: Dependency) =>
+    dependency.assigneeMemberId !== null &&
+    (dependency.assigneeMemberId === myMemberId || (isOwner && dependency.assigneeMemberId === OWNER_ASSIGNEE));
+  const canEdit = (dependency: Dependency) => isOwner || dependency.assignedByUid === uid || assignedToMe(dependency);
+  const people = [
+    { id: OWNER_ASSIGNEE, label: `${ownerName} (board owner)` },
+    ...members.map((member) => ({
+      id: member.id,
+      label: `${member.name} · ${member.email}${member.uid ? "" : " (not joined yet)"}`,
+    })),
+  ];
 
   useEffect(() => () => dragCleanup.current?.(), []);
 
@@ -225,15 +242,20 @@ export function BoardScreen({
               />
               {active?.name ?? "TaskOrb"}
             </h1>
-            <p className="truncate text-xs text-white/50">{board.user.name} · drag a task onto another card</p>
+            <p className="truncate text-xs text-white/50">
+              {isOwner
+                ? `${board.user.name} · drag a task onto another card`
+                : `Shared by ${ownerName} · you can edit tasks you add or that are assigned to you`}
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" className={barBtn} onClick={() => setBoardDialog("new")}>
             Add board
           </button>
-          <button type="button" className={barBtn} onClick={() => setInviteOpen(true)}>
-            Invite
+          <button type="button" className={barBtn} onClick={() => setMembersOpen(true)}>
+            Members
+            <span className="ml-1.5 text-white/45">{members.length + 1}</span>
           </button>
           <button type="button" className={`${barBtn} relative`} onClick={() => setNotesOpen(true)}>
             Notifications
@@ -262,10 +284,11 @@ export function BoardScreen({
             >
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
               {item.name}
+              {item.ownerId !== uid ? <span className="text-[11px] text-white/45">shared</span> : null}
             </button>
           );
         })}
-        {active ? (
+        {active && isOwner ? (
           <button
             type="button"
             className="shrink-0 rounded-full px-3 py-1.5 text-sm text-white/55 transition hover:bg-white/10 hover:text-white"
@@ -314,20 +337,22 @@ export function BoardScreen({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="truncate text-sm font-semibold">{card.name}</h2>
-                    {card.isSelf ? (
+                    <h2 className="truncate text-sm font-semibold">{card.isSelf && !isOwner ? ownerName : card.name}</h2>
+                    {card.isSelf && isOwner ? (
                       <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-medium text-white/70">You</span>
                     ) : null}
                   </div>
                   <p className="truncate text-xs text-white/50">{openCount} open</p>
                 </div>
-                <button
-                  type="button"
-                  className="rounded-md px-2 py-1 text-xs font-medium text-white/55 hover:bg-white/10 hover:text-white"
-                  onClick={() => setCardDialog(card)}
-                >
-                  Edit
-                </button>
+                {isOwner ? (
+                  <button
+                    type="button"
+                    className="rounded-md px-2 py-1 text-xs font-medium text-white/55 hover:bg-white/10 hover:text-white"
+                    onClick={() => setCardDialog(card)}
+                  >
+                    Edit
+                  </button>
+                ) : null}
               </div>
               <ul className="flex min-h-[12px] flex-1 flex-col gap-2 overflow-y-auto px-2 py-2">
                 {dependencies.length === 0 ? (
@@ -339,6 +364,8 @@ export function BoardScreen({
                     const overdue = isOverdue(dependency.deadline, dependency.status, today);
                     const dueToday = dependency.deadline === today && dependency.status !== "done";
                     const dragging = drag?.id === dependency.id;
+                    const editable = canEdit(dependency);
+                    const mine = assignedToMe(dependency);
                     return (
                       <li
                         key={dependency.id}
@@ -347,34 +374,38 @@ export function BoardScreen({
                         } ${dragging ? "opacity-40" : ""}`}
                       >
                         <div className="flex items-start gap-2">
-                          <button
-                            type="button"
-                            draggable
-                            aria-label={`Drag ${dependency.name} to another card`}
-                            className="mt-0.5 cursor-grab touch-none text-white/35 hover:text-white/70 active:cursor-grabbing"
-                            onPointerDown={(event) => beginDrag(event, dependency)}
-                            onDragStart={(event) => {
-                              event.dataTransfer.setData("text/plain", dependency.id);
-                              event.dataTransfer.effectAllowed = "move";
-                              setDrag({
-                                id: dependency.id,
-                                name: dependency.name,
-                                fromCardId: dependency.cardId,
-                                x: event.clientX,
-                                y: event.clientY,
-                                overCardId: null,
-                              });
-                            }}
-                            onDragEnd={() => setDrag(null)}
-                          >
-                            <GripIcon />
-                          </button>
+                          {isOwner ? (
+                            <button
+                              type="button"
+                              draggable
+                              aria-label={`Drag ${dependency.name} to another card`}
+                              className="mt-0.5 cursor-grab touch-none text-white/35 hover:text-white/70 active:cursor-grabbing"
+                              onPointerDown={(event) => beginDrag(event, dependency)}
+                              onDragStart={(event) => {
+                                event.dataTransfer.setData("text/plain", dependency.id);
+                                event.dataTransfer.effectAllowed = "move";
+                                setDrag({
+                                  id: dependency.id,
+                                  name: dependency.name,
+                                  fromCardId: dependency.cardId,
+                                  x: event.clientX,
+                                  y: event.clientY,
+                                  overCardId: null,
+                                });
+                              }}
+                              onDragEnd={() => setDrag(null)}
+                            >
+                              <GripIcon />
+                            </button>
+                          ) : (
+                            <span aria-hidden className="w-[14px] shrink-0" />
+                          )}
                           <button
                             type="button"
                             className={`min-w-0 flex-1 text-left text-sm font-medium ${
                               dependency.status === "done" ? "text-white/40 line-through" : "text-white"
                             }`}
-                            onClick={() => setDependencyDialog({ card, dependency })}
+                            onClick={() => setDependencyDialog({ card, dependency, readOnly: !editable })}
                           >
                             {dependency.name}
                           </button>
@@ -386,6 +417,7 @@ export function BoardScreen({
                             aria-label={`Status for ${dependency.name}`}
                             className="max-w-[7.2rem] rounded-md border border-white/15 bg-[#0b1430] px-1 py-0.5 text-xs text-white/85"
                             value={dependency.status}
+                            disabled={!editable}
                             onChange={(event) => changeStatus(dependency, event.target.value as Status)}
                           >
                             {STATUSES.map((status) => (
@@ -404,7 +436,11 @@ export function BoardScreen({
                             <span>Due {formatDay(dependency.deadline)}</span>
                           ) : null}
                           {dependency.dependantOnLabel ? <span>Depends on {dependency.dependantOnLabel}</span> : null}
-                          {dependency.taskOwner ? <span>Owner {dependency.taskOwner}</span> : null}
+                          {mine ? (
+                            <span className="font-medium text-[#8fb3ff]">Assigned to you</span>
+                          ) : dependency.taskOwner ? (
+                            <span>Owner {dependency.taskOwner}</span>
+                          ) : null}
                           {dependency.priority ? <span>{PRIORITY_LABELS[dependency.priority]}</span> : null}
                           {dependency.waitingFor ? <span>Waiting for {dependency.waitingFor}</span> : null}
                           {dependency.blocks ? <span>Blocks {dependency.blocks}</span> : null}
@@ -435,13 +471,15 @@ export function BoardScreen({
             </article>
           );
         })}
-        <button
-          type="button"
-          className="h-fit w-[300px] shrink-0 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-3 py-3 text-left text-sm font-medium text-white/60 transition hover:bg-white/[0.07] hover:text-white"
-          onClick={() => setCardDialog("new")}
-        >
-          + Add a card
-        </button>
+        {isOwner ? (
+          <button
+            type="button"
+            className="h-fit w-[300px] shrink-0 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-3 py-3 text-left text-sm font-medium text-white/60 transition hover:bg-white/[0.07] hover:text-white"
+            onClick={() => setCardDialog("new")}
+          >
+            + Add a card
+          </button>
+        ) : null}
       </section>
       {drag ? (
         <div
@@ -521,9 +559,11 @@ export function BoardScreen({
 
       {dependencyDialog ? (
         <DependencyDialog
-          cardName={dependencyDialog.card.name}
+          cardName={dependencyDialog.card.isSelf && !isOwner ? ownerName : dependencyDialog.card.name}
           dependency={dependencyDialog.dependency}
           focusHold={dependencyDialog.focusHold}
+          readOnly={dependencyDialog.readOnly}
+          people={people}
           siblings={board.dependencies.filter((item) => item.cardId === dependencyDialog.card.id)}
           onClose={() => setDependencyDialog(null)}
           onSubmit={async (input) => {
@@ -545,7 +585,7 @@ export function BoardScreen({
             await onReload();
           }}
           onDelete={
-            dependencyDialog.dependency
+            dependencyDialog.dependency && (isOwner || dependencyDialog.dependency.assignedByUid === uid)
               ? async () => {
                   await api(`/api/dependencies/${dependencyDialog.dependency!.id}`, { method: "DELETE" });
                   setToast("Task removed.");
@@ -556,12 +596,21 @@ export function BoardScreen({
         />
       ) : null}
 
-      {inviteOpen ? (
-        <InviteDialog
-          onClose={() => setInviteOpen(false)}
-          onCopied={() => {
+      {membersOpen && active ? (
+        <MembersDialog
+          board={active}
+          user={board.user}
+          onClose={() => setMembersOpen(false)}
+          onChanged={async (message) => {
             setError(null);
-            setToast("Invite link copied.");
+            setToast(message);
+            await onReload();
+          }}
+          onLeft={async () => {
+            setMembersOpen(false);
+            setActiveBoardId(null);
+            setToast(`You left ${active.name}.`);
+            await onReload();
           }}
         />
       ) : null}

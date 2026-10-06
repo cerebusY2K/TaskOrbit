@@ -39,11 +39,25 @@ export type UserProfile = {
   createdAt: string;
 };
 
+export type BoardMember = {
+  id: string;
+  name: string;
+  email: string;
+  uid: string | null;
+  addedAt: string;
+  joinedAt: string | null;
+};
+
+export const OWNER_ASSIGNEE = "owner";
+
 export type Board = {
   id: string;
   ownerId: string;
   name: string;
   color: string;
+  members?: BoardMember[];
+  memberUids?: string[];
+  ownerName?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -72,6 +86,7 @@ export type Dependency = {
   status: Status;
   holdReason: string | null;
   taskOwner: string | null;
+  assigneeMemberId: string | null;
   priority: Priority | null;
   waitingFor: string | null;
   blocks: string | null;
@@ -114,6 +129,7 @@ export type PendingAssignment = {
 export type InviteRecord = {
   id: string;
   token: string;
+  boardId?: string | null;
   email: string | null;
   fromUid: string;
   fromName: string;

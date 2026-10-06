@@ -238,6 +238,7 @@ export function BoardOrbit({
                 </span>
                 <span className="mt-0.5 block text-xs text-white/55 sm:text-sm">
                   {item.open} open{item.overdue ? ` · ${item.overdue} overdue` : ""}
+                  {item.board.ownerId !== payload.user.uid ? ` · shared by ${item.board.ownerName ?? "someone"}` : ""}
                 </span>
                 {isHovered && item.tasks.length ? (
                   <ul className="mt-2 grid gap-1 border-t border-white/10 pt-2">

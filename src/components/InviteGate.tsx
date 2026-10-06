@@ -7,19 +7,16 @@ import { LoginScreen } from "./LoginScreen";
 export function InviteGate({ token }: { token: string }) {
   const [config, setConfig] = useState<PublicConfig | null>(null);
   const [fromName, setFromName] = useState<string | null>(null);
+  const [boardName, setBoardName] = useState<string | null>(null);
   const [signedIn, setSignedIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const accept = useCallback(async () => {
-    const result = await api<{ status: string }>(`/api/invite/${encodeURIComponent(token)}`, {
+    const result = await api<{ status: string; boardId?: string | null }>(`/api/invite/${encodeURIComponent(token)}`, {
       method: "POST",
     });
-    if (result.status === "self") {
-      window.location.href = "/";
-      return;
-    }
-    window.location.href = "/";
+    window.location.href = result.boardId ? `/?board=${encodeURIComponent(result.boardId)}` : "/";
   }, [token]);
 
   useEffect(() => {
@@ -29,9 +26,12 @@ export function InviteGate({ token }: { token: string }) {
         const nextConfig = await api<PublicConfig>("/api/config");
         if (!active) return;
         setConfig(nextConfig);
-        const preview = await api<{ fromName: string }>(`/api/invite/${encodeURIComponent(token)}`);
+        const preview = await api<{ fromName: string; boardName?: string | null }>(
+          `/api/invite/${encodeURIComponent(token)}`,
+        );
         if (!active) return;
         setFromName(preview.fromName);
+        setBoardName(preview.boardName ?? null);
         if (nextConfig.mode !== "unconfigured") {
           try {
             await api<BoardPayload>("/api/board");
@@ -76,10 +76,12 @@ export function InviteGate({ token }: { token: string }) {
         <section className="w-full max-w-md glass-panel rounded-2xl p-6 text-white">
           <p className="text-sm font-semibold text-[#8fb3ff]">TaskOrb</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-            {fromName} invited you
+            {fromName} invited you{boardName ? ` to ${boardName}` : ""}
           </h1>
           <p className="mt-2 text-sm text-white/60">
-            Accept to join. Your cards stay on your own board.
+            {boardName
+              ? "You will see the whole board and can edit tasks you add or that are assigned to you. Your own boards stay private."
+              : "Accept to join. Your cards stay on your own board."}
           </p>
           <button
             type="button"
@@ -99,6 +101,7 @@ export function InviteGate({ token }: { token: string }) {
     <LoginScreen
       config={config}
       inviteFrom={fromName}
+      inviteBoard={boardName}
       onSignedIn={async () => {
         await accept();
       }}

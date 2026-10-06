@@ -9,10 +9,12 @@ export function LoginScreen({
   config,
   onSignedIn,
   inviteFrom,
+  inviteBoard,
 }: {
   config: PublicConfig;
   onSignedIn: () => Promise<void>;
   inviteFrom?: string | null;
+  inviteBoard?: string | null;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -70,11 +72,13 @@ export function LoginScreen({
         <OrbitMark className="mx-auto h-12 w-12" />
         <p className="mt-4 text-3xl font-semibold tracking-tight">TaskOrb</p>
         <h1 className="mt-2 text-base text-white/75">
-          {inviteFrom ? `${inviteFrom} invited you to TaskOrb` : "Every task, in orbit."}
+          {inviteFrom ? `${inviteFrom} invited you to ${inviteBoard ?? "TaskOrb"}` : "Every task, in orbit."}
         </h1>
         <p className="mt-3 text-sm text-white/55">
           {inviteFrom
-            ? "Sign in with Google to join. Your boards stay private."
+            ? inviteBoard
+              ? "Sign in with Google to join the board. Your own boards stay private."
+              : "Sign in with Google to join. Your boards stay private."
             : "Private boards for your work, people, and what each task is waiting on."}
         </p>
         {config.firebase ? (

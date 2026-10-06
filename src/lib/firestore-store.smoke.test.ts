@@ -26,6 +26,8 @@ describe.skipIf(!enabled)("Firestore store against the live database", () => {
       await Promise.all(notes.docs.map((doc) => doc.ref.delete()));
       const invites = await db.collection("invites").where("fromUid", "==", uid).get();
       await Promise.all(invites.docs.map((doc) => doc.ref.delete()));
+      const boards = await db.collection("boards").where("memberUids", "array-contains", uid).get();
+      await Promise.all(boards.docs.map((doc) => doc.ref.delete()));
       await db.collection("users").doc(uid).delete();
     }
   });
@@ -35,7 +37,7 @@ describe.skipIf(!enabled)("Firestore store against the live database", () => {
     await service.signIn(sam);
 
     const start = await service.board(ada);
-    expect(start.boards).toHaveLength(1);
+    expect(start.boards).toHaveLength(5);
     expect(start.cards.filter((card) => card.isSelf)).toHaveLength(1);
 
     const launch = await service.createBoard(ada, { name: "Launch", color: "#6554c0" });
@@ -73,13 +75,17 @@ describe.skipIf(!enabled)("Firestore store against the live database", () => {
     expect(other.cards.some((card) => card.id === api.id)).toBe(false);
     expect(other.dependencies).toHaveLength(0);
 
-    const invite = await service.inviteLink(ada, "https://taskorb.example");
+    const sumit = await service.addMember(ada, launch.id, { name: "Sam", email: sam.email });
+    const invite = await service.boardInvite(ada, launch.id, "https://taskorb.example");
     const accepted = await service.acceptInvite(sam, invite.token);
     expect(accepted.status).toBe("accepted");
+    const shared = await service.board(sam);
+    expect(shared.boards.find((item) => item.id === launch.id)?.members?.[0]).toMatchObject({ id: sumit.id, uid: sam.uid });
+    expect(shared.dependencies.some((item) => item.id === created.dependency.id)).toBe(true);
 
     await service.deleteBoard(ada, launch.id);
     const after = await service.board(ada);
-    expect(after.boards).toHaveLength(1);
+    expect(after.boards).toHaveLength(5);
     expect(after.dependencies.some((item) => item.id === created.dependency.id)).toBe(false);
   }, 60_000);
 });

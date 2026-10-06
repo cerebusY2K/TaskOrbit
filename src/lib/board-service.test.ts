@@ -137,24 +137,118 @@ describe("board", () => {
     expect(adaBoard.cards.map((item) => item.name)).toEqual(["Me", "Sam"]);
   });
 
-  it("reuses one invite link and accepts it once", async () => {
+  it("reuses one invite link per board and joins it once", async () => {
     const { service } = setup();
     await service.signIn(ada);
     await service.signIn(sam);
-    const first = await service.inviteLink(ada);
-    const second = await service.inviteLink(ada);
+    const work = (await service.board(ada)).boards[0]!;
+    const first = await service.boardInvite(ada, work.id);
+    const second = await service.boardInvite(ada, work.id);
     expect(first.url).toBe(second.url);
     expect(first.url.startsWith("https://depend.example/invite/")).toBe(true);
+    await expect(service.boardInvite(sam, work.id)).rejects.toThrow(/not found/i);
     await expect(service.previewInvite("missing")).rejects.toThrow(/not valid/);
-    expect((await service.previewInvite(first.token)).fromName).toBe("Ada");
+    expect(await service.previewInvite(first.token)).toEqual({ fromName: "Ada", boardName: work.name });
     expect((await service.acceptInvite(ada, first.token)).status).toBe("self");
     expect((await service.acceptInvite(sam, first.token)).status).toBe("accepted");
     expect((await service.acceptInvite(sam, first.token)).status).toBe("already");
     const samBoard = await service.board(sam);
-    expect(samBoard.notifications.filter((item) => item.title === "You're in")).toHaveLength(1);
-    expect((await service.board(ada)).notifications[0]?.title).toBe("Sam joined");
+    expect(samBoard.boards.find((item) => item.id === work.id)?.ownerName).toBe("Ada");
+    expect(samBoard.notifications.map((item) => item.title)).toContain(`You joined ${work.name}`);
+    expect((await service.board(ada)).notifications.map((item) => item.title)).toContain(`Sam joined ${work.name}`);
     await service.markAllNotificationsRead(sam);
     expect((await service.board(sam)).notifications.every((item) => item.read)).toBe(true);
+  });
+
+  it("merges a placeholder member into the account they joined with", async () => {
+    const { service } = setup();
+    const sumit: SessionUser = { uid: "sumit", email: "sumit@abc.com", name: "Sumit A", photoURL: null };
+    await service.signIn(ada);
+    const work = (await service.board(ada)).boards[0]!;
+    const me = (await service.board(ada)).cards.find((card) => card.isSelf)!;
+    const placeholder = await service.addMember(ada, work.id, { name: "Sumit", email: "Sumit@xyz.com" });
+    expect(placeholder.email).toBe("sumit@xyz.com");
+    await expect(service.addMember(ada, work.id, { name: "Again", email: "sumit@xyz.com" })).rejects.toThrow(
+      /already a member/,
+    );
+    const assigned = await service.createDependency(ada, {
+      cardId: me.id,
+      name: "Ship the release notes",
+      status: "open",
+      assigneeMemberId: placeholder.id,
+    });
+    expect(assigned.dependency.taskOwner).toBe("Sumit");
+    const unassigned = await service.createDependency(ada, { cardId: me.id, name: "Ada only", status: "open" });
+
+    await service.signIn(sumit);
+    const invite = await service.boardInvite(ada, work.id);
+    await service.acceptInvite(sumit, invite.token);
+    const joined = (await service.board(ada)).boards.find((item) => item.id === work.id)!.members!;
+    expect(joined.map((member) => [member.email, Boolean(member.uid)])).toEqual([
+      ["sumit@xyz.com", false],
+      ["sumit@abc.com", true],
+    ]);
+    const account = joined.find((member) => member.uid === "sumit")!;
+
+    const before = await service.board(sumit);
+    expect(before.dependencies.map((item) => item.name).sort()).toEqual(["Ada only", "Ship the release notes"]);
+    await expect(
+      service.updateDependency(sumit, assigned.dependency.id, { status: "wip" }),
+    ).rejects.toThrow(/owner, the task's creator, or its assignee/);
+
+    const merged = await service.mergeMember(ada, work.id, { fromId: placeholder.id, intoId: account.id });
+    expect(merged.moved).toBe(1);
+    const after = (await service.board(ada)).boards.find((item) => item.id === work.id)!;
+    expect(after.members!.map((member) => member.email)).toEqual(["sumit@abc.com"]);
+    const task = (await service.board(sumit)).dependencies.find((item) => item.id === assigned.dependency.id)!;
+    expect(task.assigneeMemberId).toBe(account.id);
+    expect(task.taskOwner).toBe("Sumit A");
+    expect((await service.board(sumit)).notifications.map((item) => item.title)).toContain("1 task moved to you");
+
+    await expect(service.updateDependency(sumit, assigned.dependency.id, { status: "wip" })).resolves.toMatchObject({
+      status: "wip",
+    });
+    await expect(service.deleteDependency(sumit, assigned.dependency.id)).rejects.toThrow(/not found/i);
+    await expect(service.updateDependency(sumit, unassigned.dependency.id, { status: "done" })).rejects.toThrow(
+      /owner, the task's creator, or its assignee/,
+    );
+    await expect(service.updateCard(sumit, me.id, { name: "Mine" })).rejects.toThrow(/not found/i);
+    await expect(service.addMember(sumit, work.id, { name: "X", email: "x@y.com" })).rejects.toThrow(/not found/i);
+
+    const own = await service.createDependency(sumit, { cardId: me.id, name: "Sumit's idea", status: "open" });
+    expect(own.dependency.ownerId).toBe("ada");
+    await expect(service.updateDependency(sumit, own.dependency.id, { name: "Sumit's plan" })).resolves.toMatchObject({
+      name: "Sumit's plan",
+    });
+    expect((await service.board(ada)).dependencies.some((item) => item.id === own.dependency.id)).toBe(true);
+    await service.deleteDependency(sumit, own.dependency.id);
+    expect((await service.board(ada)).dependencies.some((item) => item.id === own.dependency.id)).toBe(false);
+  });
+
+  it("links a joining account to the member with the same email, and lets them leave", async () => {
+    const { service } = setup();
+    await service.signIn(ada);
+    await service.signIn(sam);
+    const work = (await service.board(ada)).boards[0]!;
+    const member = await service.addMember(ada, work.id, { name: "Samuel", email: "sam@example.com" });
+    const me = (await service.board(ada)).cards.find((card) => card.isSelf)!;
+    await service.acceptInvite(sam, (await service.boardInvite(ada, work.id)).token);
+    const members = (await service.board(ada)).boards.find((item) => item.id === work.id)!.members!;
+    expect(members).toHaveLength(1);
+    expect(members[0]).toMatchObject({ id: member.id, uid: "sam", name: "Samuel" });
+
+    await service.createDependency(ada, { cardId: me.id, name: "For Sam", status: "open", assigneeMemberId: member.id });
+    expect((await service.board(sam)).notifications.map((item) => item.title)).toContain("New task for you");
+
+    await service.leaveBoard(sam, work.id);
+    expect((await service.board(sam)).boards.some((item) => item.id === work.id)).toBe(false);
+    expect((await service.board(sam)).dependencies).toHaveLength(0);
+    const left = (await service.board(ada)).boards.find((item) => item.id === work.id)!.members!;
+    expect(left[0]).toMatchObject({ id: member.id, uid: null });
+
+    await service.removeMember(ada, work.id, member.id);
+    const task = (await service.board(ada)).dependencies.find((item) => item.name === "For Sam")!;
+    expect(task.assigneeMemberId).toBeNull();
   });
 
   it("moves a dependency onto another card and keeps the parent as a note", async () => {
