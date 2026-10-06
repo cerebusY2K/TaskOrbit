@@ -45,12 +45,12 @@ export function BoardDialog({
           <div className="mt-1 flex items-center gap-3">
             <input
               aria-label="Board color"
-              className="h-11 w-16 cursor-pointer rounded-lg border border-[#dfe1e6] bg-white p-1"
+              className="h-11 w-16 cursor-pointer rounded-lg border border-white/15 bg-white/5 p-1"
               type="color"
               value={color}
               onChange={(event) => setColor(event.target.value)}
             />
-            <span className="text-sm text-[#44546f]">This color fills the board background.</span>
+            <span className="text-sm text-white/60">This color tints the board and its orbit.</span>
           </div>
         </Field>
         {error ? (

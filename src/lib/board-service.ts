@@ -13,6 +13,14 @@ import type { Board, Card, Dependency, SessionUser, UserProfile } from "./types"
 
 type Actor = SessionUser;
 
+export const DEFAULT_BOARDS = [
+  { name: "Work", color: "#4c7dff" },
+  { name: "Personal", color: "#22b07d" },
+  { name: "Projects", color: "#a970ff" },
+  { name: "Follow-ups", color: "#ff9f43" },
+  { name: "Ideas", color: "#ff5c8a" },
+] as const;
+
 function now() {
   return new Date().toISOString();
 }
@@ -385,15 +393,21 @@ export class BoardService {
   private async ensureWorkspace(user: UserProfile) {
     let boards = await this.store.listBoards(user.uid);
     if (boards.length === 0) {
-      const created = await this.store.createBoard({
-        id: id(),
-        ownerId: user.uid,
-        name: "Main",
-        color: "#0c66e4",
-        createdAt: now(),
-        updatedAt: now(),
-      });
-      boards = [created];
+      const start = Date.now();
+      boards = [];
+      for (const [index, preset] of DEFAULT_BOARDS.entries()) {
+        const stamp = new Date(start + index).toISOString();
+        boards.push(
+          await this.store.createBoard({
+            id: `${user.uid}-default-${index + 1}`,
+            ownerId: user.uid,
+            name: preset.name,
+            color: preset.color,
+            createdAt: stamp,
+            updatedAt: stamp,
+          }),
+        );
+      }
     }
     const home = boards[0];
     const cards = await this.store.listCards(user.uid);

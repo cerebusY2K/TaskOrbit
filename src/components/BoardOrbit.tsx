@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { isOverdue, todayISO } from "@/lib/domain";
 import type { Board, BoardPayload, Dependency } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
+import { OrbitMark } from "./LoginScreen";
+import { clamp, drawTail, easeOutCubic, GOLDEN, pointOn, setupCanvas, tiltFor, toRgb } from "./orbit-math";
 
 type Item = {
   board: Board;
@@ -22,17 +24,6 @@ const OPEN_MS = 420;
 const LAP_MS = 42000;
 const SLOW = 0.04;
 const TAIL = 1.1;
-const TAIL_STEPS = 28;
-const TILTS = [-10, 16, -22, 6, 26, -16, 20, -4, 12, -26];
-const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-
-const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-
-function toRgb(hex: string) {
-  const value = Number.parseInt(hex.replace("#", "").padEnd(6, "0").slice(0, 6), 16);
-  return Number.isNaN(value) ? "120, 170, 255" : `${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}`;
-}
 
 function buildItems(payload: BoardPayload): Item[] {
   const boards = [...payload.boards].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -44,7 +35,7 @@ function buildItems(payload: BoardPayload): Item[] {
     return {
       board,
       reach,
-      tilt: (TILTS[index % TILTS.length]! * Math.PI) / 180,
+      tilt: tiltFor(index),
       lap: LAP_MS * (0.45 + reach),
       offset: index * GOLDEN,
       rgb: toRgb(board.color),
@@ -93,22 +84,10 @@ export function BoardOrbit({
     return { rx, ry, tilt: portrait ? item.tilt * 0.4 : item.tilt };
   }
 
-  function pointOn(orbit: { rx: number; ry: number; tilt: number }, angle: number, grow: number) {
-    const ex = Math.cos(angle) * orbit.rx * grow;
-    const ey = Math.sin(angle) * orbit.ry * grow;
-    const cos = Math.cos(orbit.tilt);
-    const sin = Math.sin(orbit.tilt);
-    return { x: ex * cos - ey * sin, y: ex * sin + ey * cos, depth: (Math.sin(angle) + 1) / 2 };
-  }
-
   useEffect(() => {
-    if (box.width === 0) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.round(box.width * dpr);
-    canvas.height = Math.round(box.height * dpr);
+    if (box.width === 0 || !canvasRef.current) return;
+    const ctx = setupCanvas(canvasRef.current, box.width, box.height);
+    if (!ctx) return;
     const cx = box.width / 2;
     const cy = box.height / 2;
     const state = live.current;
@@ -134,10 +113,7 @@ export function BoardOrbit({
         setSettled(true);
       }
 
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, box.width, box.height);
-      ctx.lineCap = "butt";
-      ctx.shadowBlur = 12;
       const appear = clamp(intro * 2, 0, 1);
 
       items.forEach((item, index) => {
@@ -161,26 +137,12 @@ export function BoardOrbit({
         card.style.zIndex = String(focus === index ? 1000 : Math.round(depth * 100));
 
         const motion = reduced ? 0.35 : 0.2 + 0.8 * Math.min(1, state.speeds[index]!) + (1 - grow) * 1.6;
-        const length = TAIL * motion;
-        ctx.shadowColor = `rgba(${item.rgb}, ${0.7 * fade * appear})`;
-        let prev = { x, y };
-        for (let step = 1; step <= TAIL_STEPS; step++) {
-          const t = step / TAIL_STEPS;
-          const point = pointOn(orbit, angle - length * t, grow);
-          const alpha = (1 - t) ** 1.4 * 0.9 * fade * appear * (0.55 + 0.45 * point.depth);
-          ctx.strokeStyle = `rgba(${item.rgb}, ${alpha})`;
-          ctx.lineWidth = Math.max(0.5, 8 * (1 - t) * (0.7 + 0.3 * point.depth));
-          ctx.beginPath();
-          ctx.moveTo(cx + prev.x, cy + prev.y);
-          ctx.lineTo(cx + point.x, cy + point.y);
-          ctx.stroke();
-          prev = point;
-        }
+        drawTail(ctx, { cx, cy, orbit, angle, grow, length: TAIL * motion, rgb: item.rgb, alpha: fade * appear, width: 8 });
       });
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-    // orbitOf/pointOn read box, which is covered here.
+    // orbitOf reads box, which is covered here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [box, items]);
 
@@ -202,11 +164,14 @@ export function BoardOrbit({
   return (
     <div className="orbit-space relative flex h-screen min-h-0 flex-col overflow-hidden text-white">
       <header className="relative z-10 flex items-center justify-between gap-3 px-4 py-4 sm:px-6">
-        <div>
-          <p className="text-lg font-semibold tracking-tight">TaskOrbit</p>
-          <p className="text-sm text-white/60">
-            {settled ? "Hover a board to pause it, click to open" : `Welcome back, ${firstName}`}
-          </p>
+        <div className="flex items-center gap-3">
+          <OrbitMark className="h-9 w-9" />
+          <div>
+            <p className="text-lg font-semibold tracking-tight">TaskOrbit</p>
+            <p className="text-sm text-white/60">
+              {settled ? "Hover a board to pause it, click to open" : `Welcome back, ${firstName}`}
+            </p>
+          </div>
         </div>
         <button
           type="button"

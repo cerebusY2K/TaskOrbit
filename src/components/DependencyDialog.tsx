@@ -89,7 +89,7 @@ export function DependencyDialog({
   return (
     <Modal title={dependency ? "Edit task" : "Add task"} onClose={onClose}>
       <form className="grid gap-4" onSubmit={submit}>
-        <p className="text-sm text-[#5e564c]">On {cardName}</p>
+        <p className="text-sm text-white/60">On {cardName}</p>
         <Field label="Task">
           <input className={fieldClass} value={name} onChange={(event) => setName(event.target.value)} required />
         </Field>

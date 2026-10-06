@@ -13,7 +13,7 @@ const config: Config = {
         sand: "#efe6d6",
         paper: "#fffdf9",
         moss: "#0f6e6e",
-        clay: "#c4553a",
+        clay: "#ff8f7a",
       },
       boxShadow: {
         card: "0 16px 40px rgba(48, 36, 22, 0.08)",

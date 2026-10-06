@@ -2,14 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api-client";
-import { isOverdue, textOnColor, todayISO } from "@/lib/domain";
+import { isOverdue, todayISO } from "@/lib/domain";
 import type { Board, BoardPayload, Card, Dependency, Status } from "@/lib/types";
 import { PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { BoardDialog } from "./BoardDialog";
 import { CardDialog } from "./CardDialog";
 import { DependencyDialog } from "./DependencyDialog";
 import { InviteDialog } from "./InviteDialog";
+import { OrbitMark } from "./LoginScreen";
 import { ghostBtn } from "./Modal";
+import { OrbitBackdrop } from "./OrbitBackdrop";
+import { toRgb } from "./orbit-math";
 
 function formatDay(iso: string) {
   const [year, month, day] = iso.split("-").map(Number);
@@ -70,7 +73,6 @@ export function BoardScreen({
   const unread = board.notifications.filter((item) => !item.read).length;
   const workspaces = [...board.boards].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const active = workspaces.find((item) => item.id === activeBoardId) ?? workspaces[0];
-  const light = active ? textOnColor(active.color) === "#1c1915" : false;
   const cards = board.cards
     .filter((card) => card.boardId === active?.id)
     .sort((a, b) => Number(b.isSelf) - Number(a.isSelf) || a.createdAt.localeCompare(b.createdAt));
@@ -189,75 +191,103 @@ export function BoardScreen({
     }
   }
 
-  const barBtn = light
-    ? "rounded-md bg-black/10 px-3 py-1.5 text-sm font-medium text-[#172b4d] transition hover:bg-black/15"
-    : "rounded-md bg-white/20 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/30";
+  const accent = toRgb(active?.color ?? "#4d84ff");
+  const barBtn =
+    "rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white";
 
   return (
-    <div className="flex h-screen min-h-0 flex-col" style={{ background: active?.color ?? "#0c66e4" }}>
-      <header className={`flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:px-4 ${light ? "text-[#172b4d]" : "text-white"}`}>
-        <div className="min-w-0">
-          <p className="text-lg font-semibold tracking-tight">TaskOrbit</p>
-          <p className={`truncate text-xs ${light ? "text-[#172b4d]/70" : "text-white/80"}`}>
-            {board.user.name} · drag a task onto another card
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="orbit-space relative flex h-screen min-h-0 flex-col overflow-hidden text-white">
+      <OrbitBackdrop className="absolute inset-0 opacity-30" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 transition-[background] duration-500"
+        style={{ background: `radial-gradient(70% 45% at 50% -10%, rgba(${accent}, 0.28), transparent 70%)` }}
+      />
+      <header className="relative flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:px-5">
+        <div className="flex min-w-0 items-center gap-3">
           {onShowAll ? (
-            <button type="button" className={barBtn} onClick={onShowAll}>
+            <button
+              type="button"
+              className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-3 text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
+              onClick={onShowAll}
+            >
+              <OrbitMark className="h-7 w-7" />
               All boards
             </button>
-          ) : null}
+          ) : (
+            <OrbitMark className="h-8 w-8" />
+          )}
+          <div className="min-w-0">
+            <h1 className="flex items-center gap-2 truncate text-lg font-semibold tracking-tight">
+              <span
+                className="h-3 w-3 shrink-0 rounded-full"
+                style={{ background: active?.color, boxShadow: `0 0 12px rgba(${accent}, 0.9)` }}
+              />
+              {active?.name ?? "TaskOrbit"}
+            </h1>
+            <p className="truncate text-xs text-white/50">{board.user.name} · drag a task onto another card</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <button type="button" className={barBtn} onClick={() => setBoardDialog("new")}>
             Add board
           </button>
           <button type="button" className={barBtn} onClick={() => setInviteOpen(true)}>
             Invite
           </button>
-          <button type="button" className={barBtn} onClick={() => setNotesOpen(true)}>
-            Notifications{unread > 0 ? ` (${unread})` : ""}
+          <button type="button" className={`${barBtn} relative`} onClick={() => setNotesOpen(true)}>
+            Notifications
+            {unread > 0 ? (
+              <span className="ml-1.5 rounded-full bg-[#4d84ff] px-1.5 py-0.5 text-[11px] font-semibold text-white">{unread}</span>
+            ) : null}
           </button>
           <button type="button" className={barBtn} onClick={onSignOut}>
             Sign out
           </button>
         </div>
       </header>
-      <div className="flex gap-2 overflow-x-auto px-3 pb-3 sm:px-4">
+      <nav aria-label="Boards" className="relative flex gap-2 overflow-x-auto px-3 pb-3 sm:px-5">
         {workspaces.map((item) => {
           const selected = item.id === active?.id;
           return (
             <button
               key={item.id}
               type="button"
-              className={`flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium ${
-                selected ? "bg-white text-[#172b4d]" : light ? "bg-black/10 text-[#172b4d]" : "bg-white/20 text-white"
+              aria-pressed={selected}
+              className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-sm transition ${
+                selected ? "bg-white/15 font-medium text-white" : "bg-white/5 text-white/65 hover:bg-white/10 hover:text-white"
               }`}
+              style={selected ? { boxShadow: `inset 0 0 0 1px ${item.color}` } : undefined}
               onClick={() => setActiveBoardId(item.id)}
             >
-              <span className="h-3 w-3 rounded-full border border-black/10" style={{ background: item.color }} />
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
               {item.name}
             </button>
           );
         })}
         {active ? (
-          <button type="button" className={barBtn} onClick={() => setBoardDialog(active)}>
-            Board color
+          <button
+            type="button"
+            className="shrink-0 rounded-full px-3 py-1.5 text-sm text-white/55 transition hover:bg-white/10 hover:text-white"
+            onClick={() => setBoardDialog(active)}
+          >
+            Edit board
           </button>
         ) : null}
-      </div>
+      </nav>
 
       {error ? (
-        <p role="alert" className="mx-3 mb-2 rounded-lg bg-[#ffebe6] px-3 py-2 text-sm text-clay sm:mx-4">
+        <p role="alert" className="relative mx-3 mb-2 rounded-lg border border-[#ff6b57]/40 bg-[#3a1418]/80 px-3 py-2 text-sm text-[#ffb4a6] sm:mx-5">
           {error}
         </p>
       ) : null}
       {toast ? (
-        <p role="status" className="mx-3 mb-2 rounded-lg bg-white px-3 py-2 text-sm text-[#0c66e4] sm:mx-4">
+        <p role="status" className="relative mx-3 mb-2 rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white sm:mx-5">
           {toast}
         </p>
       ) : null}
 
-      <section className="flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-3 pb-4 sm:px-4">
+      <section className="relative flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-3 pb-4 sm:px-5">
         {cards.map((card) => {
           const dependencies = sortDependencies(
             board.dependencies.filter((item) => item.cardId === card.id),
@@ -270,31 +300,30 @@ export function BoardScreen({
               key={card.id}
               data-card-id={card.id}
               aria-label={`Card ${card.name}`}
-              className={`flex max-h-full w-[320px] shrink-0 flex-col rounded-xl bg-[#f1f2f4] ${
-                dropping ? (light ? "ring-2 ring-[#172b4d]" : "ring-2 ring-white") : ""
-              }`}
+              className={`glass-panel flex max-h-full w-[320px] shrink-0 flex-col rounded-2xl ${dropping ? "ring-2 ring-white/70" : ""}`}
               onDragOver={(event) => {
                 event.preventDefault();
                 if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
                 setDrag((current) => (current ? { ...current, overCardId: card.id } : current));
               }}
             >
-              <div className="flex items-start gap-2 px-3 pb-1 pt-3">
-                <span className="mt-1 h-8 w-1.5 shrink-0 rounded-full" style={{ background: card.color }} />
+              <div className="flex items-start gap-2.5 px-3 pb-1 pt-3">
+                <span
+                  className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ background: card.color, boxShadow: `0 0 10px ${card.color}` }}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="truncate text-sm font-semibold text-[#172b4d]">{card.name}</h2>
+                    <h2 className="truncate text-sm font-semibold">{card.name}</h2>
                     {card.isSelf ? (
-                      <span className="rounded bg-white px-1.5 py-0.5 text-[11px] font-medium text-[#44546f]">
-                        You
-                      </span>
+                      <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-medium text-white/70">You</span>
                     ) : null}
                   </div>
-                  <p className="truncate text-xs text-[#626f86]">{openCount} open</p>
+                  <p className="truncate text-xs text-white/50">{openCount} open</p>
                 </div>
                 <button
                   type="button"
-                  className="rounded-md px-2 py-1 text-xs font-medium text-[#44546f] hover:bg-[#e4e6ea]"
+                  className="rounded-md px-2 py-1 text-xs font-medium text-white/55 hover:bg-white/10 hover:text-white"
                   onClick={() => setCardDialog(card)}
                 >
                   Edit
@@ -302,7 +331,9 @@ export function BoardScreen({
               </div>
               <ul className="flex min-h-[12px] flex-1 flex-col gap-2 overflow-y-auto px-2 py-2">
                 {dependencies.length === 0 ? (
-                  <li className="px-2 py-4 text-center text-xs text-[#626f86]">Drop a task here</li>
+                  <li className="rounded-xl border border-dashed border-white/10 px-2 py-4 text-center text-xs text-white/40">
+                    Drop a task here
+                  </li>
                 ) : (
                   dependencies.map((dependency) => {
                     const overdue = isOverdue(dependency.deadline, dependency.status, today);
@@ -311,8 +342,8 @@ export function BoardScreen({
                     return (
                       <li
                         key={dependency.id}
-                        className={`rounded-lg bg-white px-2 py-2 shadow-sm ${
-                          overdue ? "dep-urgent ring-1 ring-[#e34935]" : ""
+                        className={`rounded-xl border bg-white/[0.04] px-2 py-2 transition hover:bg-white/[0.07] ${
+                          overdue ? "dep-urgent border-[#ff6b57]/70" : "border-white/10"
                         } ${dragging ? "opacity-40" : ""}`}
                       >
                         <div className="flex items-start gap-2">
@@ -320,7 +351,7 @@ export function BoardScreen({
                             type="button"
                             draggable
                             aria-label={`Drag ${dependency.name} to another card`}
-                            className="mt-0.5 cursor-grab touch-none text-[#626f86] active:cursor-grabbing"
+                            className="mt-0.5 cursor-grab touch-none text-white/35 hover:text-white/70 active:cursor-grabbing"
                             onPointerDown={(event) => beginDrag(event, dependency)}
                             onDragStart={(event) => {
                               event.dataTransfer.setData("text/plain", dependency.id);
@@ -341,7 +372,7 @@ export function BoardScreen({
                           <button
                             type="button"
                             className={`min-w-0 flex-1 text-left text-sm font-medium ${
-                              dependency.status === "done" ? "text-[#626f86] line-through" : "text-[#172b4d]"
+                              dependency.status === "done" ? "text-white/40 line-through" : "text-white"
                             }`}
                             onClick={() => setDependencyDialog({ card, dependency })}
                           >
@@ -353,7 +384,7 @@ export function BoardScreen({
                           <select
                             id={`status-${dependency.id}`}
                             aria-label={`Status for ${dependency.name}`}
-                            className="max-w-[7.2rem] rounded-md border border-[#dfe1e6] bg-white px-1 py-0.5 text-xs"
+                            className="max-w-[7.2rem] rounded-md border border-white/15 bg-[#0b1430] px-1 py-0.5 text-xs text-white/85"
                             value={dependency.status}
                             onChange={(event) => changeStatus(dependency, event.target.value as Status)}
                           >
@@ -364,7 +395,7 @@ export function BoardScreen({
                             ))}
                           </select>
                         </div>
-                        <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 pl-6 text-xs text-[#44546f]">
+                        <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 pl-6 text-xs text-white/55">
                           {overdue ? (
                             <span className="font-semibold text-clay">Overdue · {formatDay(dependency.deadline!)}</span>
                           ) : null}
@@ -383,9 +414,9 @@ export function BoardScreen({
                             <span>From {dependency.assignedByName}</span>
                           ) : null}
                         </div>
-                        {dependency.notes ? <p className="mt-1 line-clamp-2 pl-6 text-xs text-[#44546f]">{dependency.notes}</p> : null}
+                        {dependency.notes ? <p className="mt-1 line-clamp-2 pl-6 text-xs text-white/55">{dependency.notes}</p> : null}
                         {dependency.status === "hold" && dependency.holdReason ? (
-                          <p className="mt-1 pl-6 text-xs text-[#7a5b00]">Hold: {dependency.holdReason}</p>
+                          <p className="mt-1 pl-6 text-xs text-[#ffd27a]">Hold: {dependency.holdReason}</p>
                         ) : null}
                       </li>
                     );
@@ -395,7 +426,7 @@ export function BoardScreen({
               <div className="px-2 pb-2">
                 <button
                   type="button"
-                  className="w-full rounded-lg px-2 py-2 text-left text-sm font-medium text-[#44546f] hover:bg-[#e4e6ea]"
+                  className="w-full rounded-lg px-2 py-2 text-left text-sm font-medium text-white/55 hover:bg-white/5 hover:text-white"
                   onClick={() => setDependencyDialog({ card })}
                 >
                   + Add a task
@@ -406,9 +437,7 @@ export function BoardScreen({
         })}
         <button
           type="button"
-          className={`h-fit w-[300px] shrink-0 rounded-xl px-3 py-3 text-left text-sm font-medium hover:bg-white/30 ${
-            light ? "bg-black/10 text-[#172b4d]" : "bg-white/20 text-white"
-          }`}
+          className="h-fit w-[300px] shrink-0 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-3 py-3 text-left text-sm font-medium text-white/60 transition hover:bg-white/[0.07] hover:text-white"
           onClick={() => setCardDialog("new")}
         >
           + Add a card
@@ -416,7 +445,7 @@ export function BoardScreen({
       </section>
       {drag ? (
         <div
-          className="pointer-events-none fixed z-50 w-56 rounded-lg bg-white px-3 py-2 text-sm font-medium text-[#172b4d] shadow-xl"
+          className="glass-panel pointer-events-none fixed z-50 w-56 rounded-lg px-3 py-2 text-sm font-medium text-white"
           style={{ left: drag.x + 14, top: drag.y + 14 }}
         >
           {drag.name}
@@ -538,14 +567,14 @@ export function BoardScreen({
       ) : null}
 
       {notesOpen ? (
-        <div className="fixed inset-0 z-30 flex justify-end bg-[#1c1915]/40" onMouseDown={() => setNotesOpen(false)}>
+        <div className="fixed inset-0 z-30 flex justify-end bg-[#02040b]/60 backdrop-blur-sm" onMouseDown={() => setNotesOpen(false)}>
           <aside
-            className="h-full w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl"
+            className="h-full w-full max-w-md overflow-y-auto border-l border-white/10 bg-[#0a1228]/95 p-5 text-white shadow-xl"
             aria-label="Notifications"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-[#172b4d]">Notifications</h2>
+              <h2 className="text-xl font-semibold">Notifications</h2>
               <button type="button" className={ghostBtn} onClick={() => setNotesOpen(false)} aria-label="Close notifications">
                 Close
               </button>
@@ -564,16 +593,19 @@ export function BoardScreen({
             ) : null}
             <ul className="mt-4 space-y-3">
               {board.notifications.length === 0 ? (
-                <li className="text-sm text-[#6f675e]">No notifications yet.</li>
+                <li className="text-sm text-white/50">No notifications yet.</li>
               ) : (
                 board.notifications.map((item) => (
-                  <li key={item.id} className={`rounded-lg border px-3 py-3 ${item.read ? "border-[#dfe1e6]" : "border-[#0c66e4] bg-[#e9f2ff]"}`}>
+                  <li
+                    key={item.id}
+                    className={`rounded-xl border px-3 py-3 ${item.read ? "border-white/10" : "border-[#4d84ff]/60 bg-[#4d84ff]/10"}`}
+                  >
                     <p className="font-medium">{item.title}</p>
-                    <p className="mt-1 text-sm text-[#5e564c]">{item.body}</p>
+                    <p className="mt-1 text-sm text-white/60">{item.body}</p>
                     {item.read ? null : (
                       <button
                         type="button"
-                        className="mt-2 text-sm font-medium text-[#0c66e4]"
+                        className="mt-2 text-sm font-medium text-[#8fb3ff]"
                         onClick={async () => {
                           await api("/api/notifications/read", {
                             method: "POST",
@@ -592,7 +624,6 @@ export function BoardScreen({
           </aside>
         </div>
       ) : null}
-
     </div>
   );
 }

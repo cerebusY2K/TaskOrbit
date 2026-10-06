@@ -21,23 +21,23 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-[#1c1915]/45 p-3 sm:items-center"
+      className="fixed inset-0 z-40 flex items-end justify-center bg-[#02040b]/70 p-3 backdrop-blur-sm sm:items-center"
       onMouseDown={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-5 shadow-xl"
+        className="glass-panel max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl p-5 text-white"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
-          <h2 className="text-xl font-semibold tracking-tight text-[#172b4d]">{title}</h2>
+          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full px-2 py-1 text-xl leading-none text-[#6f675e] hover:bg-sand"
+            className="rounded-full px-2 py-1 text-xl leading-none text-white/60 hover:bg-white/10 hover:text-white"
           >
             ×
           </button>
@@ -49,13 +49,13 @@ export function Modal({
 }
 
 export const primaryBtn =
-  "inline-flex items-center justify-center rounded-lg bg-[#0c66e4] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0952b8] disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-lg bg-[#4d84ff] px-4 py-2 text-sm font-medium text-white shadow-[0_6px_24px_rgba(77,132,255,0.35)] transition hover:bg-[#3b70f0] disabled:cursor-not-allowed disabled:opacity-60";
 
 export const ghostBtn =
-  "inline-flex items-center justify-center rounded-lg border border-[#dfe1e6] bg-white px-4 py-2 text-sm font-medium text-[#172b4d] transition hover:bg-[#f1f2f4] disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60";
 
 export const fieldClass =
-  "mt-1 w-full rounded-lg border border-[#dfe1e6] bg-white px-3 py-2 text-sm text-[#172b4d] outline-none ring-[#0c66e4] focus:ring-2";
+  "mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none ring-[#4d84ff] placeholder:text-white/35 focus:ring-2";
 
 export function Field({
   label,
@@ -65,7 +65,7 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="block text-sm font-medium text-[#4d463d]">
+    <label className="block text-sm font-medium text-white/75">
       {label}
       {children}
     </label>

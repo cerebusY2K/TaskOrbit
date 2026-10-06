@@ -198,12 +198,3 @@ export function isOverdue(
 export function defaultCardColor(): string {
   return CARD_COLORS[0];
 }
-
-export function textOnColor(hex: string): string {
-  const value = hex.replace("#", "");
-  const red = parseInt(value.slice(0, 2), 16);
-  const green = parseInt(value.slice(2, 4), 16);
-  const blue = parseInt(value.slice(4, 6), 16);
-  const brightness = (red * 299 + green * 587 + blue * 114) / 1000;
-  return brightness > 160 ? "#1c1915" : "#fffdf9";
-}

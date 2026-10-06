@@ -40,14 +40,14 @@ export function CardDialog({
     <Modal title={isSelf ? "Me card" : card ? "Edit card" : "New card"} onClose={onClose}>
       <form className="grid gap-4" onSubmit={submit}>
         {isSelf ? (
-          <p className="text-sm text-[#5e564c]">This is your list. You can change its color.</p>
+          <p className="text-sm text-white/60">This is your list. You can change its color.</p>
         ) : (
           <Field label="Card name">
             <input className={fieldClass} value={name} onChange={(event) => setName(event.target.value)} required />
           </Field>
         )}
         <div>
-          <p className="text-sm font-medium text-[#4d463d]">Color</p>
+          <p className="text-sm font-medium text-white/75">Color</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {CARD_COLORS.map((swatch) => (
               <button
@@ -59,7 +59,7 @@ export function CardDialog({
                 className="h-9 w-9 rounded-full border-2"
                 style={{
                   background: swatch,
-                  borderColor: color === swatch ? "#1c1915" : "transparent",
+                  borderColor: color === swatch ? "#ffffff" : "transparent",
                 }}
               />
             ))}

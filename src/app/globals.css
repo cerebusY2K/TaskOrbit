@@ -2,10 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  color-scheme: dark;
+}
+
 body {
   min-height: 100vh;
-  background: linear-gradient(180deg, #0b63ce 0%, #084a9a 100%);
-  color: #172b4d;
+  background: radial-gradient(120% 120% at 50% -20%, #13204a, #04060f 60%) fixed;
+  color: #fff;
+}
+
+.glass-panel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(13, 23, 51, 0.72);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
 }
 
 @keyframes dep-vibrate {

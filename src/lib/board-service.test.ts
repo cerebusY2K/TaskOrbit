@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BoardService } from "./board-service";
+import { BoardService, DEFAULT_BOARDS } from "./board-service";
 import { isOverdue } from "./domain";
 import { MemoryStore } from "./store";
 import type { SessionUser } from "./types";
@@ -201,9 +201,10 @@ describe("board", () => {
   it("keeps cards on the board they were added to and stores task details", async () => {
     const { service } = setup();
     await service.signIn(ada);
-    const first = (await service.board(ada)).boards[0];
-    expect(first?.name).toBe("Main");
-    expect(first?.color).toBe("#0c66e4");
+    const defaults = (await service.board(ada)).boards;
+    expect(defaults.map((item) => item.name)).toEqual(DEFAULT_BOARDS.map((item) => item.name));
+    const first = defaults[0];
+    expect(first?.color).toBe(DEFAULT_BOARDS[0].color);
     const second = await service.createBoard(ada, { name: "Launch", color: "#6554c0" });
     const card = await service.createCard(ada, { name: "API", boardId: second.id });
     const created = await service.createDependency(ada, {
@@ -230,7 +231,18 @@ describe("board", () => {
     const loaded = await service.board(ada);
     expect(loaded.cards.find((item) => item.name === "API")?.boardId).toBe(second.id);
     expect(loaded.cards.find((item) => item.isSelf)?.boardId).toBe(first?.id);
-    await expect(service.deleteBoard(ada, first!.id)).resolves.toBeUndefined();
+    for (const item of defaults) {
+      await expect(service.deleteBoard(ada, item.id)).resolves.toBeUndefined();
+    }
+    expect((await service.board(ada)).cards.find((item) => item.isSelf)?.boardId).toBe(second.id);
     await expect(service.deleteBoard(ada, second.id)).rejects.toThrow(/at least one board/i);
+  });
+
+  it("creates the default boards once, even when sign-in and load race", async () => {
+    const { service } = setup();
+    await Promise.all([service.signIn(ada), service.board(ada).catch(() => null)]);
+    await service.signIn(ada);
+    const loaded = await service.board(ada);
+    expect(loaded.boards).toHaveLength(DEFAULT_BOARDS.length);
   });
 });
