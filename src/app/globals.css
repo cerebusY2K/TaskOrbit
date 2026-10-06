@@ -34,6 +34,15 @@ body {
     radial-gradient(120% 120% at 50% -20%, #13204a, #04060f 60%);
 }
 
+.globe-sphere {
+  background: radial-gradient(circle at 32% 26%, #3a63b8 0%, #1a3270 22%, #0c1838 55%, #040814 100%);
+  box-shadow:
+    inset -30px -40px 80px rgba(0, 0, 0, 0.7),
+    inset 10px 14px 50px rgba(140, 185, 255, 0.18),
+    0 0 0 1px rgba(124, 196, 255, 0.18),
+    0 0 70px rgba(64, 120, 255, 0.35);
+}
+
 .globe-orbits {
   transition: opacity 1.2s ease;
 }

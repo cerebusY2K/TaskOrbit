@@ -122,6 +122,7 @@ export function BoardGlobe({
   const spots = useMemo(() => placeSpots(boards, payload), [boards, payload]);
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sphereRef = useRef<HTMLDivElement>(null);
   const labelRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [size, setSize] = useState(0);
   const [phase, setPhase] = useState<Phase>("intro");
@@ -188,11 +189,13 @@ export function BoardGlobe({
       height: size,
       phi: m.phi,
       theta: m.theta,
-      dark: 1,
-      diffuse: 1.4,
-      mapSamples: 16000,
-      mapBrightness: 5,
-      baseColor: [0.22, 0.26, 0.36],
+      dark: 0,
+      diffuse: 1.6,
+      // cobe treats 0 as "use the default", so a near-zero value hides the country dots.
+      mapSamples: 1000,
+      mapBrightness: 0.0001,
+      mapBaseBrightness: 0,
+      baseColor: [0.1, 0.15, 0.3],
       markerColor: [0.4, 0.7, 1],
       glowColor: [0.16, 0.26, 0.55],
       markers: [],
@@ -202,7 +205,8 @@ export function BoardGlobe({
       arcHeight: 0.35,
       markerElevation: 0.02,
       scale: m.scale,
-      opacity: m.opacity,
+      // Only hides cobe's own sphere; the CSS sphere behind the canvas is the visible body.
+      opacity: 0,
     });
 
     let frame = 0;
@@ -255,7 +259,13 @@ export function BoardGlobe({
         color: spot.rgb,
       }));
       const arcs = [...(swirl > 0 && swirl < 1 ? swirlArcs(swirl) : []), ...networkArcs(spots, reveal)];
-      globe.update({ phi: m.phi, theta: m.theta, scale: m.scale, opacity: m.opacity, markers, arcs });
+      globe.update({ phi: m.phi, theta: m.theta, scale: m.scale, markers, arcs });
+      canvas.style.opacity = String(m.opacity);
+      const sphere = sphereRef.current;
+      if (sphere) {
+        sphere.style.transform = `translate(-50%, -50%) scale(${m.scale})`;
+        sphere.style.opacity = String(m.opacity);
+      }
 
       spots.forEach((spot, index) => {
         const label = labelRefs.current[index];
@@ -390,6 +400,12 @@ export function BoardGlobe({
               <ellipse rx="96" ry="40" fill="none" stroke="url(#orbit-a)" strokeWidth="0.4" strokeDasharray="12 26" />
             </g>
           </svg>
+          <div
+            ref={sphereRef}
+            aria-hidden
+            className="globe-sphere pointer-events-none absolute left-1/2 top-1/2 rounded-full"
+            style={{ width: size * RADIUS, height: size * RADIUS, transform: "translate(-50%, -50%) scale(0.55)" }}
+          />
           <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" style={{ width: size, height: size }} />
           {spots.map((spot, index) => (
             <button
