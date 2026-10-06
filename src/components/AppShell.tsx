@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type BoardPayload, type PublicConfig } from "@/lib/api-client";
 import { clientAuth, warmAuth } from "@/lib/firebase-client";
-import { BoardGlobe } from "./BoardGlobe";
+import { BoardOrbit } from "./BoardOrbit";
 import { BoardScreen } from "./BoardScreen";
 import { LoginScreen } from "./LoginScreen";
 
@@ -85,7 +85,7 @@ export function AppShell() {
     );
   }
   if (!openBoardId) {
-    return <BoardGlobe payload={board} onOpen={openBoard} onSignOut={signOut} />;
+    return <BoardOrbit payload={board} onOpen={openBoard} onSignOut={signOut} />;
   }
   return (
     <BoardScreen
@@ -94,7 +94,7 @@ export function AppShell() {
       initialBoardId={openBoardId}
       onReload={refresh}
       onSignOut={signOut}
-      onShowGlobe={() => setOpenBoardId(null)}
+      onShowAll={() => setOpenBoardId(null)}
     />
   );
 }

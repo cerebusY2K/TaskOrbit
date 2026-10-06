@@ -37,13 +37,13 @@ export function BoardScreen({
   initialBoardId = null,
   onReload,
   onSignOut,
-  onShowGlobe,
+  onShowAll,
 }: {
   board: BoardPayload;
   initialBoardId?: string | null;
   onReload: () => Promise<void>;
   onSignOut: () => Promise<void>;
-  onShowGlobe?: () => void;
+  onShowAll?: () => void;
 }) {
   const [cardDialog, setCardDialog] = useState<Card | "new" | null>(null);
   const [boardDialog, setBoardDialog] = useState<Board | "new" | null>(null);
@@ -203,9 +203,9 @@ export function BoardScreen({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {onShowGlobe ? (
-            <button type="button" className={barBtn} onClick={onShowGlobe}>
-              Globe
+          {onShowAll ? (
+            <button type="button" className={barBtn} onClick={onShowAll}>
+              All boards
             </button>
           ) : null}
           <button type="button" className={barBtn} onClick={() => setBoardDialog("new")}>
