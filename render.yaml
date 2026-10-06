@@ -19,7 +19,7 @@ services:
       - key: FIREBASE_API_KEY
         value: AIzaSyApuky1-PsecZKV-YgqwskSZ8v6A82bKuw
       - key: FIREBASE_AUTH_DOMAIN
-        value: gocorona-52deb.firebaseapp.com
+        value: taskorbit-k762.onrender.com
       - key: FIREBASE_PROJECT_ID
         value: gocorona-52deb
       - key: FIREBASE_APP_ID

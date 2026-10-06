@@ -34,6 +34,8 @@ Google sign-in works from the web config alone. The server checks the Google tok
 
 Add the `onrender.com` host under Firebase Authentication, Settings, Authorized domains, or Google sign-in will be refused.
 
+`FIREBASE_AUTH_DOMAIN` on Render is the site's own host. The app forwards `/__/auth/*` to Firebase, so Google's account picker names this site instead of the Firebase project. The Google OAuth client must list `https://<host>/__/auth/handler` as an authorized redirect URI.
+
 The build runs the test suite before `next build`. Do not deploy until `npm test` passes locally.
 
 To check the live database, run `FIRESTORE_SMOKE=1 FIREBASE_SERVICE_ACCOUNT_PATH=secrets/taskorbit-service-account.json npx vitest run src/lib/firestore-store.smoke.test.ts`. It creates two throwaway users and deletes everything it wrote.
