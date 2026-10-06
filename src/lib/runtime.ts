@@ -7,9 +7,17 @@ import { MemoryStore, type StoreSnapshot } from "./store";
 
 export type DataMode = "firebase" | "local" | "unconfigured";
 
-export function firebaseWebConfig() {
+function authHosts() {
+  return (process.env.AUTH_HOSTS || "")
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function firebaseWebConfig(requestHost?: string | null) {
   const apiKey = process.env.FIREBASE_API_KEY;
-  const authDomain = process.env.FIREBASE_AUTH_DOMAIN;
+  const host = requestHost?.split(":")[0]?.toLowerCase();
+  const authDomain = host && authHosts().includes(host) ? host : process.env.FIREBASE_AUTH_DOMAIN;
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const appId = process.env.FIREBASE_APP_ID;
   if (!apiKey || !authDomain || !projectId || !appId) return null;
@@ -49,7 +57,7 @@ function fileStore() {
 export function getRuntime() {
   if (dataMode() === "unconfigured") {
     throw new BoardError(
-      "TaskOrbit needs Firebase credentials before it can run in production. Add them on Render, then redeploy.",
+      "TaskOrb needs Firebase credentials before it can run in production. Add them on Render, then redeploy.",
       503,
     );
   }

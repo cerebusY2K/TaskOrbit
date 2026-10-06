@@ -223,7 +223,7 @@ export function BoardScreen({
                 className="h-3 w-3 shrink-0 rounded-full"
                 style={{ background: active?.color, boxShadow: `0 0 12px rgba(${accent}, 0.9)` }}
               />
-              {active?.name ?? "TaskOrbit"}
+              {active?.name ?? "TaskOrb"}
             </h1>
             <p className="truncate text-xs text-white/50">{board.user.name} · drag a task onto another card</p>
           </div>

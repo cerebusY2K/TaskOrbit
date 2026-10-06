@@ -167,7 +167,7 @@ export function BoardOrbit({
         <div className="flex items-center gap-3">
           <OrbitMark className="h-9 w-9" />
           <div>
-            <p className="text-lg font-semibold tracking-tight">TaskOrbit</p>
+            <p className="text-lg font-semibold tracking-tight">TaskOrb</p>
             <p className="text-sm text-white/60">
               {settled ? "Hover a board to pause it, click to open" : `Welcome back, ${firstName}`}
             </p>

@@ -1,4 +1,4 @@
-# TaskOrbit
+# TaskOrb
 
 Private boards of cards. Each board has its own background color. Each card holds tasks with an owner, status (open, on hold, in progress, done), priority, due date, depends on, waiting for, blocks, next action, last update, and notes. On hold requires a reason. A task whose due date has passed shakes until it is marked done.
 
@@ -29,12 +29,12 @@ Google sign-in works from the web config alone. The server checks the Google tok
 
 `render.yaml` is a Render Blueprint. The public Firebase web config is already in it. When Render asks, fill in:
 
-- `APP_URL`: the public `https://…onrender.com` address, so invite links point at the hosted site.
+- `APP_URL`: the public address (`https://taskorb.app`), so invite links point at the hosted site.
 - `FIREBASE_SERVICE_ACCOUNT`: the service account JSON on one line.
 
-Add the `onrender.com` host under Firebase Authentication, Settings, Authorized domains, or Google sign-in will be refused.
+The site is served at `taskorb.app` (DNS at Hostinger: an `A` record for `@` to `216.24.57.1` and a `CNAME` for `www` to the `onrender.com` host). Every host the site answers on must be listed under Firebase Authentication, Settings, Authorized domains, or Google sign-in will be refused.
 
-`FIREBASE_AUTH_DOMAIN` on Render is the site's own host. The app forwards `/__/auth/*` to Firebase, so Google's account picker names this site instead of the Firebase project. The Google OAuth client must list `https://<host>/__/auth/handler` as an authorized redirect URI.
+The app forwards `/__/auth/*` to Firebase, so Google's account picker names this site instead of the Firebase project. Sign-in runs through whichever host the visitor is on, as long as it is in `AUTH_HOSTS`; otherwise it falls back to `FIREBASE_AUTH_DOMAIN`. The Google OAuth client must list `https://<host>/__/auth/handler` as a redirect URI and `https://<host>` as a JavaScript origin for each of those hosts.
 
 The build runs the test suite before `next build`. Do not deploy until `npm test` passes locally.
 

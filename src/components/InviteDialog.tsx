@@ -34,7 +34,7 @@ export function InviteDialog({ onClose, onCopied }: { onClose: () => void; onCop
       <div className="grid gap-4">
         <p className="text-sm text-white/60">
           Copy this link and send it however you like. When someone opens it and signs in with
-          Google, they join TaskOrbit and you both get a notification. Their board stays private.
+          Google, they join TaskOrb and you both get a notification. Their board stays private.
         </p>
         <label className="block text-sm font-medium text-white/75">
           Invite link

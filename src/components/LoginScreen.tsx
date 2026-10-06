@@ -68,9 +68,9 @@ export function LoginScreen({
       <div className="orbit-core pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full" />
       <section className="glass-panel relative w-full max-w-sm rounded-2xl p-7 text-center">
         <OrbitMark className="mx-auto h-12 w-12" />
-        <p className="mt-4 text-3xl font-semibold tracking-tight">TaskOrbit</p>
+        <p className="mt-4 text-3xl font-semibold tracking-tight">TaskOrb</p>
         <h1 className="mt-2 text-base text-white/75">
-          {inviteFrom ? `${inviteFrom} invited you to TaskOrbit` : "Every task, in orbit."}
+          {inviteFrom ? `${inviteFrom} invited you to TaskOrb` : "Every task, in orbit."}
         </h1>
         <p className="mt-3 text-sm text-white/55">
           {inviteFrom

@@ -49,7 +49,7 @@ export function AppShell() {
         if (nextConfig.mode !== "unconfigured") await refresh();
       } catch (err) {
         if (!active) return;
-        setError(err instanceof Error ? err.message : "Could not start TaskOrbit.");
+        setError(err instanceof Error ? err.message : "Could not start TaskOrb.");
       } finally {
         if (active) setLoading(false);
       }
@@ -65,7 +65,7 @@ export function AppShell() {
   if (!config || config.mode === "unconfigured") {
     return (
       <main className="mx-auto max-w-xl px-6 py-16">
-        <h1 className="text-4xl font-semibold text-white">TaskOrbit</h1>
+        <h1 className="text-4xl font-semibold text-white">TaskOrb</h1>
         <p className="mt-4 text-white/85">
           {config?.message || error || "Firebase is not configured on this server yet."}
         </p>

@@ -7,6 +7,9 @@ services:
     buildCommand: npm ci --include=dev && npm test && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
+    domains:
+      - taskorb.app
+      - www.taskorb.app
     envVars:
       - key: NODE_ENV
         value: production
@@ -20,6 +23,8 @@ services:
         value: AIzaSyApuky1-PsecZKV-YgqwskSZ8v6A82bKuw
       - key: FIREBASE_AUTH_DOMAIN
         value: taskorbit-k762.onrender.com
+      - key: AUTH_HOSTS
+        value: taskorb.app,www.taskorb.app,taskorbit-k762.onrender.com
       - key: FIREBASE_PROJECT_ID
         value: gocorona-52deb
       - key: FIREBASE_APP_ID

@@ -4,9 +4,9 @@ import { dataMode, firebaseWebConfig } from "@/lib/runtime";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const mode = dataMode();
-  const firebase = firebaseWebConfig();
+  const firebase = firebaseWebConfig(request.headers.get("x-forwarded-host") ?? request.headers.get("host"));
   return json({
     mode,
     firebase,
