@@ -80,6 +80,7 @@ export type Dependency = {
   cardId: string;
   linkId: string;
   name: string;
+  startDate: string | null;
   deadline: string | null;
   dependantOnId: string | null;
   dependantOnLabel: string | null;
@@ -91,7 +92,6 @@ export type Dependency = {
   waitingFor: string | null;
   blocks: string | null;
   nextAction: string | null;
-  lastUpdate: string | null;
   notes: string | null;
   assignedByUid: string;
   assignedByName: string;

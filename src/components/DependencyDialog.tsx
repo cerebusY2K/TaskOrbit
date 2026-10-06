@@ -9,6 +9,16 @@ type Assignee = { id: string; label: string };
 
 const TYPED_OWNER = "__typed";
 
+function formatUpdated(iso: string) {
+  return new Date(iso).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function DependencyDialog({
   cardName,
   dependency,
@@ -29,6 +39,7 @@ export function DependencyDialog({
   onClose: () => void;
   onSubmit: (input: {
     name: string;
+    startDate: string;
     deadline: string;
     dependantOnId: string | null;
     dependantOnLabel: string | null;
@@ -40,7 +51,6 @@ export function DependencyDialog({
     waitingFor: string;
     blocks: string;
     nextAction: string;
-    lastUpdate: string;
     notes: string;
   }) => Promise<void>;
   onDelete?: () => Promise<void>;
@@ -49,6 +59,7 @@ export function DependencyDialog({
   const [name, setName] = useState(dependency?.name ?? "");
   const typedOwner = (dependency && !dependency.assigneeMemberId ? dependency.taskOwner : null) ?? "";
   const [assignee, setAssignee] = useState(dependency?.assigneeMemberId ?? (typedOwner ? TYPED_OWNER : ""));
+  const [startDate, setStartDate] = useState(dependency?.startDate ?? "");
   const [deadline, setDeadline] = useState(dependency?.deadline ?? "");
   const [mode, setMode] = useState<"none" | "existing" | "text">(initialMode);
   const [dependantOnId, setDependantOnId] = useState(dependency?.dependantOnId ?? "");
@@ -60,7 +71,6 @@ export function DependencyDialog({
   const [waitingFor, setWaitingFor] = useState(dependency?.waitingFor ?? "");
   const [blocks, setBlocks] = useState(dependency?.blocks ?? "");
   const [nextAction, setNextAction] = useState(dependency?.nextAction ?? "");
-  const [lastUpdate, setLastUpdate] = useState(dependency?.lastUpdate ?? "");
   const [notes, setNotes] = useState(dependency?.notes ?? "");
   const [holdReason, setHoldReason] = useState(dependency?.holdReason ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +85,7 @@ export function DependencyDialog({
     try {
       await onSubmit({
         name,
+        startDate,
         deadline,
         dependantOnId: mode === "existing" ? dependantOnId : null,
         dependantOnLabel: mode === "text" ? dependantOnLabel : null,
@@ -86,7 +97,6 @@ export function DependencyDialog({
         waitingFor,
         blocks,
         nextAction,
-        lastUpdate,
         notes,
       });
       onClose();
@@ -104,22 +114,25 @@ export function DependencyDialog({
           On {cardName}
           {readOnly ? " · view only. You can edit tasks you add or that are assigned to you." : ""}
         </p>
+        {dependency ? (
+          <p className="-mt-2 text-xs text-white/45">Last updated {formatUpdated(dependency.updatedAt)}</p>
+        ) : null}
         <fieldset disabled={readOnly} className="m-0 grid min-w-0 gap-4 border-0 p-0 disabled:opacity-70">
           <Field label="Task">
             <input className={fieldClass} value={name} onChange={(event) => setName(event.target.value)} required />
           </Field>
+          <Field label="Owner">
+            <select className={fieldClass} value={assignee} onChange={(event) => setAssignee(event.target.value)}>
+              <option value="">Unassigned</option>
+              {people.map((person) => (
+                <option key={person.id} value={person.id}>
+                  {person.label}
+                </option>
+              ))}
+              {typedOwner ? <option value={TYPED_OWNER}>{typedOwner}</option> : null}
+            </select>
+          </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Owner">
-              <select className={fieldClass} value={assignee} onChange={(event) => setAssignee(event.target.value)}>
-                <option value="">Unassigned</option>
-                {people.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.label}
-                  </option>
-                ))}
-                {typedOwner ? <option value={TYPED_OWNER}>{typedOwner}</option> : null}
-              </select>
-            </Field>
             <Field label="Priority">
               <select className={fieldClass} value={priority} onChange={(event) => setPriority(event.target.value as Priority | "")}>
                 <option value="">None</option>
@@ -139,8 +152,23 @@ export function DependencyDialog({
                 ))}
               </select>
             </Field>
-            <Field label="Due date">
-              <input className={fieldClass} type="date" value={deadline} onChange={(event) => setDeadline(event.target.value)} />
+            <Field label="From">
+              <input
+                className={fieldClass}
+                type="date"
+                value={startDate}
+                max={deadline || undefined}
+                onChange={(event) => setStartDate(event.target.value)}
+              />
+            </Field>
+            <Field label="To">
+              <input
+                className={fieldClass}
+                type="date"
+                value={deadline}
+                min={startDate || undefined}
+                onChange={(event) => setDeadline(event.target.value)}
+              />
             </Field>
           </div>
           <Field label="Depends on">
@@ -182,9 +210,6 @@ export function DependencyDialog({
           </div>
           <Field label="Next action">
             <input className={fieldClass} value={nextAction} onChange={(event) => setNextAction(event.target.value)} />
-          </Field>
-          <Field label="Last update">
-            <input className={fieldClass} type="date" value={lastUpdate} onChange={(event) => setLastUpdate(event.target.value)} />
           </Field>
           <Field label="Notes">
             <textarea className={fieldClass} rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} />

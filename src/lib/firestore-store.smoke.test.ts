@@ -57,7 +57,7 @@ describe.skipIf(!enabled)("Firestore store against the live database", () => {
       waitingFor: "Backend team",
       blocks: "QA testing",
       nextAction: "Backend needs to deploy API",
-      lastUpdate: "2026-10-05",
+      startDate: "2026-10-01",
       notes: "iOS implementation pending",
     });
     await service.updateDependency(ada, created.dependency.id, { status: "hold", holdReason: "Waiting on API" });

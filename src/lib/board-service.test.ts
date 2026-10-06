@@ -307,12 +307,12 @@ describe("board", () => {
       status: "wip",
       taskOwner: "Rahul",
       priority: "high",
+      startDate: "2026-10-01",
       deadline: "2026-10-08",
       dependantOnLabel: "API changes",
       waitingFor: "Backend team",
       blocks: "QA testing",
       nextAction: "Backend needs to deploy API",
-      lastUpdate: "2026-10-05",
       notes: "iOS implementation pending",
     });
     expect(created.dependency.taskOwner).toBe("Rahul");
@@ -320,7 +320,15 @@ describe("board", () => {
     expect(created.dependency.waitingFor).toBe("Backend team");
     expect(created.dependency.blocks).toBe("QA testing");
     expect(created.dependency.nextAction).toBe("Backend needs to deploy API");
-    expect(created.dependency.lastUpdate).toBe("2026-10-05");
+    expect(created.dependency.startDate).toBe("2026-10-01");
+    expect(created.dependency.deadline).toBe("2026-10-08");
+    await expect(
+      service.updateDependency(ada, created.dependency.id, { startDate: "2026-10-09" }),
+    ).rejects.toThrow(/To date cannot be before the From date/);
+    const before = created.dependency.updatedAt;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const edited = await service.updateDependency(ada, created.dependency.id, { status: "done" });
+    expect(edited.updatedAt > before).toBe(true);
     expect(created.dependency.notes).toBe("iOS implementation pending");
     const loaded = await service.board(ada);
     expect(loaded.cards.find((item) => item.name === "API")?.boardId).toBe(second.id);

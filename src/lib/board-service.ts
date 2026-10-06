@@ -6,7 +6,6 @@ import {
   assertName,
   defaultCardColor,
   normalizeEmail,
-  todayISO,
 } from "./domain";
 import { BoardError } from "./errors";
 import type { Store } from "./store";
@@ -249,6 +248,7 @@ export class BoardService {
     input: {
       cardId?: unknown;
       name?: unknown;
+      startDate?: unknown;
       deadline?: unknown;
       dependantOnId?: unknown;
       dependantOnLabel?: unknown;
@@ -260,7 +260,6 @@ export class BoardService {
       waitingFor?: unknown;
       blocks?: unknown;
       nextAction?: unknown;
-      lastUpdate?: unknown;
       notes?: unknown;
     },
   ) {
@@ -278,6 +277,7 @@ export class BoardService {
       cardId: card.id,
       linkId: id(),
       name: draft.name,
+      startDate: draft.startDate,
       deadline: draft.deadline,
       dependantOnId: draft.dependantOnId,
       dependantOnLabel: draft.dependantOnLabel,
@@ -289,7 +289,6 @@ export class BoardService {
       waitingFor: draft.waitingFor,
       blocks: draft.blocks,
       nextAction: draft.nextAction,
-      lastUpdate: draft.lastUpdate ?? todayISO(),
       notes: draft.notes,
       assignedByUid: actor.uid,
       assignedByName: actor.name,
@@ -309,6 +308,7 @@ export class BoardService {
     dependencyId: string,
     input: {
       name?: unknown;
+      startDate?: unknown;
       deadline?: unknown;
       dependantOnId?: unknown;
       dependantOnLabel?: unknown;
@@ -320,7 +320,6 @@ export class BoardService {
       waitingFor?: unknown;
       blocks?: unknown;
       nextAction?: unknown;
-      lastUpdate?: unknown;
       notes?: unknown;
     },
   ) {
@@ -329,6 +328,7 @@ export class BoardService {
     const draft = assertDependencyDraft(
       {
         name: input.name ?? dependency.name,
+        startDate: input.startDate === undefined ? dependency.startDate : input.startDate,
         deadline: input.deadline === undefined ? dependency.deadline : input.deadline,
         dependantOnId:
           input.dependantOnId === undefined ? dependency.dependantOnId : input.dependantOnId,
@@ -341,7 +341,6 @@ export class BoardService {
         waitingFor: input.waitingFor === undefined ? dependency.waitingFor : input.waitingFor,
         blocks: input.blocks === undefined ? dependency.blocks : input.blocks,
         nextAction: input.nextAction === undefined ? dependency.nextAction : input.nextAction,
-        lastUpdate: input.lastUpdate === undefined ? dependency.lastUpdate : input.lastUpdate,
         notes: input.notes === undefined ? dependency.notes : input.notes,
       },
       siblings,
@@ -364,6 +363,7 @@ export class BoardService {
       if (other.id === dependency.id) continue;
       await this.store.updateDependency(other.id, {
         name: draft.name,
+        startDate: draft.startDate,
         deadline: draft.deadline,
         status: draft.status,
         holdReason: draft.holdReason,
@@ -372,7 +372,6 @@ export class BoardService {
         waitingFor: draft.waitingFor,
         blocks: draft.blocks,
         nextAction: draft.nextAction,
-        lastUpdate: draft.lastUpdate,
         notes: draft.notes,
         ...(isSource ? { dependantOnLabel: draft.dependantOnLabel } : {}),
         updatedAt: timestamp,
@@ -657,7 +656,7 @@ function fillDependency(item: Dependency): Dependency {
     waitingFor: item.waitingFor ?? null,
     blocks: item.blocks ?? null,
     nextAction: item.nextAction ?? null,
-    lastUpdate: item.lastUpdate ?? null,
+    startDate: item.startDate ?? null,
     notes: item.notes ?? null,
   };
 }

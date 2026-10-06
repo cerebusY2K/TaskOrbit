@@ -78,6 +78,7 @@ export function assertDeadline(value: unknown, label = "Deadline"): string | nul
 
 export type DependencyDraft = {
   name: string;
+  startDate: string | null;
   deadline: string | null;
   dependantOnId: string | null;
   dependantOnLabel: string | null;
@@ -88,13 +89,13 @@ export type DependencyDraft = {
   waitingFor: string | null;
   blocks: string | null;
   nextAction: string | null;
-  lastUpdate: string | null;
   notes: string | null;
 };
 
 export function assertDependencyDraft(
   input: {
     name?: unknown;
+    startDate?: unknown;
     deadline?: unknown;
     dependantOnId?: unknown;
     dependantOnLabel?: unknown;
@@ -105,14 +106,17 @@ export function assertDependencyDraft(
     waitingFor?: unknown;
     blocks?: unknown;
     nextAction?: unknown;
-    lastUpdate?: unknown;
     notes?: unknown;
   },
   siblings: Dependency[],
   selfId: string | null,
 ): DependencyDraft {
   const name = assertName(input.name, "Task", 140);
-  const deadline = assertDeadline(input.deadline, "Due date");
+  const startDate = assertDeadline(input.startDate, "From date");
+  const deadline = assertDeadline(input.deadline, "To date");
+  if (startDate && deadline && deadline < startDate) {
+    throw new BoardError("The To date cannot be before the From date.");
+  }
   const status = assertStatus(input.status ?? "open");
   let holdReason: string | null = null;
   if (status === "hold") {
@@ -146,6 +150,7 @@ export function assertDependencyDraft(
 
   return {
     name,
+    startDate,
     deadline,
     dependantOnId,
     dependantOnLabel,
@@ -156,7 +161,6 @@ export function assertDependencyDraft(
     waitingFor: optionalText(input.waitingFor, "Waiting for"),
     blocks: optionalText(input.blocks, "Blocks"),
     nextAction: optionalText(input.nextAction, "Next action"),
-    lastUpdate: assertDeadline(input.lastUpdate, "Last update"),
     notes: optionalText(input.notes, "Notes", 2000),
   };
 }

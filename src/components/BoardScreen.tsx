@@ -432,7 +432,13 @@ export function BoardScreen({
                             <span className="font-semibold text-clay">Overdue · {formatDay(dependency.deadline!)}</span>
                           ) : null}
                           {dueToday ? <span className="font-semibold text-clay">Due today</span> : null}
-                          {dependency.deadline && !overdue && !dueToday ? (
+                          {dependency.startDate && dependency.deadline && !overdue && !dueToday ? (
+                            <span>
+                              {formatDay(dependency.startDate)} – {formatDay(dependency.deadline)}
+                            </span>
+                          ) : dependency.startDate && !dependency.deadline ? (
+                            <span>From {formatDay(dependency.startDate)}</span>
+                          ) : dependency.deadline && !overdue && !dueToday ? (
                             <span>Due {formatDay(dependency.deadline)}</span>
                           ) : null}
                           {dependency.dependantOnLabel ? <span>Depends on {dependency.dependantOnLabel}</span> : null}
@@ -445,9 +451,9 @@ export function BoardScreen({
                           {dependency.waitingFor ? <span>Waiting for {dependency.waitingFor}</span> : null}
                           {dependency.blocks ? <span>Blocks {dependency.blocks}</span> : null}
                           {dependency.nextAction ? <span>Next: {dependency.nextAction}</span> : null}
-                          {dependency.lastUpdate ? <span>Updated {formatDay(dependency.lastUpdate)}</span> : null}
+                          <span>Updated {formatDay(todayISO(new Date(dependency.updatedAt)))}</span>
                           {dependency.assignedByUid !== dependency.ownerId ? (
-                            <span>From {dependency.assignedByName}</span>
+                            <span>Added by {dependency.assignedByName}</span>
                           ) : null}
                         </div>
                         {dependency.notes ? <p className="mt-1 line-clamp-2 pl-6 text-xs text-white/55">{dependency.notes}</p> : null}

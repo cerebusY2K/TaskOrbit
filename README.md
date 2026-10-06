@@ -1,6 +1,6 @@
 # TaskOrb
 
-Private boards of cards. Each board has its own background color. Each card holds tasks with an owner, status (open, on hold, in progress, done), priority, due date, depends on, waiting for, blocks, next action, last update, and notes. On hold requires a reason. A task whose due date has passed shakes until it is marked done.
+Private boards of cards. Each board has its own background color. Each card holds tasks with an owner, status (open, on hold, in progress, done), priority, from and to dates, depends on, waiting for, blocks, next action, and notes. The last update is recorded automatically whenever the task changes. On hold requires a reason. A task whose To date has passed shakes until it is marked done.
 
 Every account starts with a Main board and a Me card. Cards you create are visible only to you. Share an invite link from the board; the other person opens it and signs in with Google.
 
