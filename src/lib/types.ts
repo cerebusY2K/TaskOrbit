@@ -46,6 +46,7 @@ export type BoardMember = {
   uid: string | null;
   addedAt: string;
   joinedAt: string | null;
+  invitedAt?: string | null;
 };
 
 export const OWNER_ASSIGNEE = "owner";

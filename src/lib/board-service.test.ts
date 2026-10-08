@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BoardService, DEFAULT_BOARDS } from "./board-service";
 import { isOverdue } from "./domain";
+import type { OutgoingMail } from "./mail";
 import { MemoryStore } from "./store";
 import type { SessionUser } from "./types";
 
@@ -222,6 +223,51 @@ describe("board", () => {
     expect((await service.board(ada)).notifications.map((item) => item.title)).toContain(`Sam joined ${work.name}`);
     await service.markAllNotificationsRead(sam);
     expect((await service.board(sam)).notifications.every((item) => item.read)).toBe(true);
+  });
+
+  it("emails new members the board's invite link", async () => {
+    const store = new MemoryStore();
+    const sent: OutgoingMail[] = [];
+    const service = new BoardService(store, "https://depend.example", null, {
+      kind: "smtp",
+      send: async (message) => {
+        sent.push(message);
+      },
+    });
+    await service.signIn(ada);
+    const work = (await service.board(ada)).boards[0]!;
+    const member = await service.addMember(ada, work.id, { name: "Sam", email: "Sam@Example.com" });
+    expect(member.emailStatus).toBe("sent");
+    const { url } = await service.boardInvite(ada, work.id);
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({ to: "sam@example.com", replyTo: "ada@example.com" });
+    expect(sent[0]!.subject).toBe(`Ada invited you to ${work.name} on TaskOrb`);
+    expect(sent[0]!.text).toContain(url);
+    expect(sent[0]!.html).toContain(url);
+    await expect(service.resendMemberInvite(ada, work.id, member.id)).rejects.toThrow(/minute/);
+    expect(sent).toHaveLength(1);
+    await expect(service.resendMemberInvite(sam, work.id, member.id)).rejects.toThrow(/not found/i);
+  });
+
+  it("keeps a copy of invites it could not email", async () => {
+    const store = new MemoryStore();
+    const failing = new BoardService(store, "https://depend.example", null, {
+      kind: "smtp",
+      send: async () => {
+        throw new Error("connection timed out");
+      },
+    });
+    await failing.signIn(ada);
+    const work = (await failing.board(ada)).boards[0]!;
+    expect((await failing.addMember(ada, work.id, { name: "Sam", email: "sam@example.com" })).emailStatus).toBe("failed");
+    expect(store.outbox.at(-1)).toMatchObject({ to: "sam@example.com", error: "connection timed out" });
+
+    const { service } = setup();
+    await service.signIn(ada);
+    const other = (await service.board(ada)).boards[0]!;
+    const member = await service.addMember(ada, other.id, { name: "Sam", email: "sam@example.com" });
+    expect(member.emailStatus).toBe("skipped");
+    expect((await service.resendMemberInvite(ada, other.id, member.id)).emailStatus).toBe("skipped");
   });
 
   it("merges a placeholder member into the account they joined with", async () => {

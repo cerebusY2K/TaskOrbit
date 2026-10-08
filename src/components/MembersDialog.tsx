@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
-import type { Board, BoardMember, UserProfile } from "@/lib/types";
+import type { Board, BoardMember, EmailStatus, UserProfile } from "@/lib/types";
 import { Field, Modal, fieldClass, ghostBtn, primaryBtn } from "./Modal";
 
 export function MembersDialog({
@@ -25,6 +25,7 @@ export function MembersDialog({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -37,8 +38,11 @@ export function MembersDialog({
   async function run(action: () => Promise<string>) {
     setBusy(true);
     setError(null);
+    setNotice(null);
     try {
-      await onChanged(await action());
+      const message = await action();
+      setNotice(message);
+      await onChanged(message);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -120,7 +124,25 @@ export function MembersDialog({
                 you={member.uid === user.uid}
               >
                 {isOwner ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {!member.uid ? (
+                      <button
+                        type="button"
+                        className="rounded-md px-2 py-1 text-xs font-medium text-[#9dbcff] hover:bg-white/10"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(async () => {
+                            const result = await api<{ emailStatus: EmailStatus }>(
+                              `/api/boards/${board.id}/members/${member.id}/invite`,
+                              { method: "POST" },
+                            );
+                            return inviteMessage(member.name, member.email, result.emailStatus, "resent");
+                          })
+                        }
+                      >
+                        Resend invite
+                      </button>
+                    ) : null}
                     {members.length > 1 ? (
                       <select
                         aria-label={`Merge ${member.name} into another member`}
@@ -166,14 +188,20 @@ export function MembersDialog({
             onSubmit={(event) => {
               event.preventDefault();
               void run(async () => {
-                await api(`/api/boards/${board.id}/members`, { method: "POST", body: JSON.stringify({ name, email }) });
+                const result = await api<{ emailStatus: EmailStatus }>(`/api/boards/${board.id}/members`, {
+                  method: "POST",
+                  body: JSON.stringify({ name, email }),
+                });
                 setName("");
                 setEmail("");
-                return `${name.trim()} added. Assign them tasks from the Owner field.`;
+                return inviteMessage(name.trim(), email.trim(), result.emailStatus, "added");
               });
             }}
           >
-            <h3 className="text-sm font-semibold text-white/80">Add a member</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-white/80">Invite by email</h3>
+              <p className="mt-1 text-xs text-white/50">They get an email with a link to {board.name}. Assign them tasks from the Owner field.</p>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Name">
                 <input className={fieldClass} value={name} onChange={(event) => setName(event.target.value)} required />
@@ -190,12 +218,13 @@ export function MembersDialog({
             </div>
             <div className="flex justify-end">
               <button type="submit" className={primaryBtn} disabled={busy}>
-                Add member
+                Add and email invite
               </button>
             </div>
           </form>
         ) : null}
 
+        {notice ? <p className="rounded-lg bg-white/[0.06] px-3 py-2 text-sm text-white/80">{notice}</p> : null}
         {error ? (
           <p role="alert" className="text-sm text-clay">
             {error}
@@ -232,6 +261,15 @@ export function MembersDialog({
       </div>
     </Modal>
   );
+}
+
+function inviteMessage(name: string, email: string, status: EmailStatus, action: "added" | "resent") {
+  if (status === "sent") return action === "added" ? `${name} added. Invite emailed to ${email}.` : `Invite sent again to ${email}.`;
+  const problem =
+    status === "failed"
+      ? `the email to ${email} did not go through. Copy the link above and send it to them.`
+      : `email is not set up yet. Copy the link above and send it to ${email}.`;
+  return action === "added" ? `${name} added, but ${problem}` : problem.charAt(0).toUpperCase() + problem.slice(1);
 }
 
 function MemberRow({

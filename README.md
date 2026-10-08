@@ -44,6 +44,17 @@ To check the live database, run `FIRESTORE_SMOKE=1 FIREBASE_SERVICE_ACCOUNT_PATH
 
 Health check: `/api/health`.
 
+## Invite emails
+
+When a board owner adds someone by name and email, TaskOrb emails them the board's invite link from `bot@taskorb.app`, with replies going to the owner. Members who haven't joined yet get a "Resend invite" button. If no mail service is configured, or sending fails, the owner is told to copy the link instead and the message is kept in `mailOutbox`.
+
+Set one of these on Render:
+
+- `BREVO_API_KEY` or `RESEND_API_KEY`: send over HTTPS. Use this on Render's free plan, which blocks outbound SMTP ports.
+- `SMTP_USER` and `SMTP_PASS`: send through the Hostinger mailbox (`smtp.hostinger.com`, port 465). Needs a paid Render instance. `SMTP_HOST`, `SMTP_PORT` and `SMTP_SECURE` override the defaults.
+
+`MAIL_FROM` sets the sender, `TaskOrb <bot@taskorb.app>` by default.
+
 ## Visitors and search
 
 Every page load sends one anonymous beacon to `/api/visit`. Bots are skipped, the visitor cookie is hashed before it is stored, and Firestore keeps only daily totals (`analyticsDays`) plus the markers that tell a new visitor from a returning one. Days are counted in India time; set `ANALYTICS_TIMEZONE` to change that.
