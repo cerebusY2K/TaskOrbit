@@ -66,6 +66,14 @@ export function BoardOrbit({
         </div>
         <div className="flex items-center gap-2">
           <InstallButton className="rounded-md bg-[#4d84ff] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[#3b70f0]" />
+          {payload.isAdmin ? (
+            <a
+              href="/admin"
+              className="rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/20"
+            >
+              Visitors
+            </a>
+          ) : null}
           <button
             type="button"
             className="rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/20"

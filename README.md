@@ -44,6 +44,19 @@ To check the live database, run `FIRESTORE_SMOKE=1 FIREBASE_SERVICE_ACCOUNT_PATH
 
 Health check: `/api/health`.
 
+## Visitors and search
+
+Every page load sends one anonymous beacon to `/api/visit`. Bots are skipped, the visitor cookie is hashed before it is stored, and Firestore keeps only daily totals (`analyticsDays`) plus the markers that tell a new visitor from a returning one. Days are counted in India time; set `ANALYTICS_TIMEZONE` to change that.
+
+The numbers are at `/admin`. Only the emails in `ADMIN_EMAILS` (comma separated) can open it; when that is unset, only the site owner can. Anyone else gets a 404.
+
+Optional settings for search engines:
+
+- `GOOGLE_SITE_VERIFICATION`: the token from Google Search Console's "HTML tag" method.
+- `SITE_URL`: the canonical address, `https://taskorb.app` by default.
+
+`/robots.txt`, `/sitemap.xml` and the share image (`src/app/opengraph-image.png`) are served by Next.
+
 ## Phone apps
 
 The site installs as an app from the browser (Install button, or Share, Add to Home Screen on iPhone). Notifications can be pushed to the phone from the bell menu.

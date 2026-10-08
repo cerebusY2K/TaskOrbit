@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, existsSync, writeFileSync } from "fs";
 import path from "path";
+import type { PublicConfig } from "./api-client";
 import { BoardService } from "./board-service";
 import { BoardError } from "./errors";
 import { firebaseAdminConfigured, FirestoreStore } from "./firestore-store";
@@ -35,6 +36,15 @@ export function dataMode(): DataMode {
   if (firebaseWebConfig() && firebaseAdminConfigured()) return "firebase";
   if (process.env.NODE_ENV !== "production") return "local";
   return "unconfigured";
+}
+
+export function publicConfig(requestHost?: string | null): PublicConfig {
+  const firebase = firebaseWebConfig(requestHost);
+  return {
+    mode: dataMode(),
+    firebase,
+    message: firebase ? null : "Google sign-in is not configured on this server yet.",
+  };
 }
 
 const globalStore = globalThis as unknown as {

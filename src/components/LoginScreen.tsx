@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { api, type PublicConfig } from "@/lib/api-client";
 import { clientAuth, consumeGoogleRedirect, friendlyAuthError, googleIdToken, warmAuth } from "@/lib/firebase-client";
 import { isNativeApp, nativeGoogleIdToken } from "@/lib/native";
@@ -11,11 +11,13 @@ export function LoginScreen({
   onSignedIn,
   inviteFrom,
   inviteBoard,
+  children,
 }: {
   config: PublicConfig;
   onSignedIn: () => Promise<void>;
   inviteFrom?: string | null;
   inviteBoard?: string | null;
+  children?: ReactNode;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -66,41 +68,49 @@ export function LoginScreen({
   }
 
   return (
-    <main className="orbit-space relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 text-white">
-      <OrbitBackdrop className="absolute inset-0" />
-      <div className="orbit-core pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full" />
-      <section className="glass-panel relative w-full max-w-sm rounded-2xl p-7 text-center">
-        <OrbitMark className="mx-auto h-12 w-12" />
-        <p className="mt-4 text-3xl font-semibold tracking-tight">TaskOrb</p>
-        <h1 className="mt-2 text-base text-white/75">
-          {inviteFrom ? `${inviteFrom} invited you to ${inviteBoard ?? "TaskOrb"}` : "Every task, in orbit."}
-        </h1>
-        <p className="mt-3 text-sm text-white/55">
-          {inviteFrom
-            ? inviteBoard
-              ? "Sign in with Google to join the board. Your own boards stay private."
-              : "Sign in with Google to join. Your boards stay private."
-            : "Private boards for your work, people, and what each task is waiting on."}
-        </p>
-        {config.firebase ? (
-          <button
-            type="button"
-            className="mt-7 inline-flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-[#0b1430] shadow-[0_8px_30px_rgba(77,132,255,0.35)] transition hover:bg-[#eef3ff] disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={busy}
-            onClick={signInGoogle}
-          >
-            <GoogleIcon />
-            {busy ? "Signing in…" : "Continue with Google"}
-          </button>
-        ) : (
-          <p className="mt-7 text-sm text-white/60">{config.message || "Google sign-in is not configured yet."}</p>
-        )}
-        {error ? (
-          <p role="alert" className="mt-4 text-sm text-clay">
-            {error}
+    <main className="text-white">
+      <div id="top" className="orbit-space relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-10">
+        <OrbitBackdrop className="absolute inset-0" />
+        <div className="orbit-core pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full" />
+        <section className="glass-panel relative w-full max-w-sm rounded-2xl p-7 text-center">
+          <OrbitMark className="mx-auto h-12 w-12" />
+          <p className="mt-4 text-3xl font-semibold tracking-tight">TaskOrb</p>
+          <h1 className="mt-2 text-base text-white/75">
+            {inviteFrom ? `${inviteFrom} invited you to ${inviteBoard ?? "TaskOrb"}` : "Every task, in orbit."}
+          </h1>
+          <p className="mt-3 text-sm text-white/55">
+            {inviteFrom
+              ? inviteBoard
+                ? "Sign in with Google to join the board. Your own boards stay private."
+                : "Sign in with Google to join. Your boards stay private."
+              : "Private boards for your work, people, and what each task is waiting on."}
           </p>
+          {config.firebase ? (
+            <button
+              type="button"
+              className="mt-7 inline-flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-[#0b1430] shadow-[0_8px_30px_rgba(77,132,255,0.35)] transition hover:bg-[#eef3ff] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={busy}
+              onClick={signInGoogle}
+            >
+              <GoogleIcon />
+              {busy ? "Signing in…" : "Continue with Google"}
+            </button>
+          ) : (
+            <p className="mt-7 text-sm text-white/60">{config.message || "Google sign-in is not configured yet."}</p>
+          )}
+          {error ? (
+            <p role="alert" className="mt-4 text-sm text-clay">
+              {error}
+            </p>
+          ) : null}
+        </section>
+        {children ? (
+          <a href="#features" className="relative mt-6 text-sm text-white/60 transition hover:text-white">
+            See how it works ↓
+          </a>
         ) : null}
-      </section>
+      </div>
+      {children}
     </main>
   );
 }

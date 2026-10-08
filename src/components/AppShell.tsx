@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { api, type BoardPayload, type PublicConfig } from "@/lib/api-client";
 import { clientAuth, warmAuth } from "@/lib/firebase-client";
 import { isNativeApp, nativeSignOut } from "@/lib/native";
@@ -8,10 +8,17 @@ import { BoardOrbit } from "./BoardOrbit";
 import { BoardScreen } from "./BoardScreen";
 import { LoginScreen } from "./LoginScreen";
 
-export function AppShell() {
-  const [config, setConfig] = useState<PublicConfig | null>(null);
+export function AppShell({
+  initialConfig,
+  landing,
+}: {
+  /** Passed when the server already knows the visitor is signed out, so the sign-in page renders without a round trip. */
+  initialConfig?: PublicConfig;
+  landing?: ReactNode;
+}) {
+  const [config, setConfig] = useState<PublicConfig | null>(initialConfig ?? null);
   const [board, setBoard] = useState<BoardPayload | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialConfig);
   const [error, setError] = useState<string | null>(null);
   const [openBoardId, setOpenBoardId] = useState<string | null>(null);
 
@@ -42,6 +49,7 @@ export function AppShell() {
   }, [config]);
 
   useEffect(() => {
+    if (initialConfig) return;
     let active = true;
     (async () => {
       try {
@@ -59,7 +67,7 @@ export function AppShell() {
     return () => {
       active = false;
     };
-  }, [refresh]);
+  }, [initialConfig, refresh]);
 
   useEffect(() => {
     if (!board) return;
@@ -91,7 +99,9 @@ export function AppShell() {
             {error}
           </p>
         ) : null}
-        <LoginScreen config={config} onSignedIn={refresh} />
+        <LoginScreen config={config} onSignedIn={refresh}>
+          {landing}
+        </LoginScreen>
       </>
     );
   }

@@ -182,4 +182,5 @@ export type BoardPayload = {
   cards: Card[];
   dependencies: Dependency[];
   notifications: AppNotification[];
+  isAdmin?: boolean;
 };

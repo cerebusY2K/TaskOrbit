@@ -37,6 +37,10 @@ export function getAdminApp() {
   return app;
 }
 
+export function firestoreDb(): Firestore {
+  return db();
+}
+
 function db(): Firestore {
   if (firestore) return firestore;
   const databaseId = process.env.FIRESTORE_DATABASE_ID;
