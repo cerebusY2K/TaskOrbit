@@ -8,6 +8,7 @@ import type { Board, BoardPayload, Card, Dependency, Status } from "@/lib/types"
 import { OWNER_ASSIGNEE, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { BoardDialog } from "./BoardDialog";
 import { CardDialog } from "./CardDialog";
+import { CardOrbit } from "./CardOrbit";
 import { DependencyDialog } from "./DependencyDialog";
 import { GanttView, type TimelineMode } from "./GanttView";
 import { InstallButton } from "./InstallButton";
@@ -26,6 +27,16 @@ function formatDay(iso: string) {
     month: "short",
     year: "numeric",
   });
+}
+
+type BoardView = "orbit" | "board" | "timeline";
+const VIEW_KEY = "taskorb-board-view";
+const VIEW_LABELS: Record<BoardView, string> = { orbit: "Orbit", board: "Simple", timeline: "Timeline" };
+
+function savedView(): BoardView {
+  if (typeof window === "undefined") return "orbit";
+  const value = window.localStorage.getItem(VIEW_KEY);
+  return value === "board" || value === "timeline" ? value : "orbit";
 }
 
 function sortDependencies(items: Dependency[], today: string) {
@@ -63,7 +74,11 @@ export function BoardScreen({
     readOnly?: boolean;
   } | null>(null);
   const [membersOpen, setMembersOpen] = useState(false);
-  const [view, setView] = useState<"board" | "timeline">("board");
+  const [view, setViewState] = useState<BoardView>(savedView);
+  const setView = (next: BoardView) => {
+    setViewState(next);
+    window.localStorage.setItem(VIEW_KEY, next);
+  };
   const [personKey, setPersonKey] = useState(EVERYONE);
   const [timelineMode, setTimelineMode] = useState<TimelineMode>("task");
   const [notesOpen, setNotesOpen] = useState(false);
@@ -251,7 +266,7 @@ export function BoardScreen({
 
   return (
     <div className="orbit-space relative flex h-screen min-h-0 flex-col overflow-hidden text-white">
-      <OrbitBackdrop className="absolute inset-0 opacity-30" />
+      {view === "orbit" ? null : <OrbitBackdrop className="absolute inset-0 opacity-30" />}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 transition-[background] duration-500"
@@ -281,7 +296,9 @@ export function BoardScreen({
             </h1>
             <p className="truncate text-xs text-white/50">
               {isOwner
-                ? `${board.user.name} · drag a task onto another card`
+                ? view === "board"
+                  ? `${board.user.name} · drag a task onto another card`
+                  : board.user.name
                 : `Shared by ${ownerName} · you can edit tasks you add or that are assigned to you`}
             </p>
           </div>
@@ -336,7 +353,7 @@ export function BoardScreen({
           </button>
         ) : null}
         <div role="group" aria-label="View" className="ml-auto flex shrink-0 rounded-full bg-white/5 p-0.5">
-          {(["board", "timeline"] as const).map((option) => (
+          {(["orbit", "board", "timeline"] as const).map((option) => (
             <button
               key={option}
               type="button"
@@ -346,7 +363,7 @@ export function BoardScreen({
               }`}
               onClick={() => setView(option)}
             >
-              {option === "board" ? "Board" : "Timeline"}
+              {VIEW_LABELS[option]}
             </button>
           ))}
         </div>
@@ -387,6 +404,25 @@ export function BoardScreen({
             />
           ) : null}
         </div>
+      ) : view === "orbit" ? (
+        <CardOrbit
+          key={active?.id ?? "none"}
+          boardName={active?.name ?? "Board"}
+          cards={cards}
+          today={today}
+          tasksFor={(card) =>
+            sortDependencies(
+              board.dependencies.filter((item) => item.cardId === card.id),
+              today,
+            )
+          }
+          cardLabel={(card) => (card.isSelf && !isOwner ? ownerName : card.name)}
+          canAddTask={(card) => !card.isDone}
+          onOpenTask={(card, dependency) => setDependencyDialog({ card, dependency, readOnly: !canEdit(dependency) })}
+          onAddTask={(card) => setDependencyDialog({ card })}
+          onAddCard={isOwner ? () => setCardDialog("new") : undefined}
+          onEditCard={isOwner ? (card) => setCardDialog(card) : undefined}
+        />
       ) : (
         <section className="relative flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-3 pb-4 sm:px-5">
           {cards.map((card) => {
