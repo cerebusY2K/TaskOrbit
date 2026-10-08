@@ -5,7 +5,7 @@ import { isOverdue, todayISO } from "@/lib/domain";
 import type { Board, BoardPayload, Dependency } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { InstallButton } from "./InstallButton";
-import { OrbitMark } from "./LoginScreen";
+import { OrbitMark } from "./OrbitMark";
 import { OrbitStage } from "./OrbitStage";
 
 type Item = {

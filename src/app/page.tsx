@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { AppShell } from "@/components/AppShell";
 import { Landing } from "@/components/Landing";
 import { publicConfig } from "@/lib/runtime";
 import { getSession } from "@/lib/session";
+import { publicMetadata } from "@/lib/site";
+
+export const metadata: Metadata = publicMetadata("/");
 
 // Served fresh on every visit so browsers and the desktop app never keep an old build.
 export const dynamic = "force-dynamic";

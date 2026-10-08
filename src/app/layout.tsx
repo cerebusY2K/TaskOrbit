@@ -24,7 +24,6 @@ export const metadata: Metadata = {
     "kanban alternative",
     "to-do list for teams",
   ],
-  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     url: "/",
@@ -36,7 +35,6 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION },
   appleWebApp: { capable: true, title: "TaskOrb", statusBarStyle: "black" },
   formatDetection: { telephone: false },
-  robots: { index: true, follow: true },
   verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
   category: "productivity",
 };
