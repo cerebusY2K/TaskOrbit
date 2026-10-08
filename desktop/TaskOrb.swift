@@ -7,7 +7,7 @@ let background = NSColor(red: 6 / 255, green: 10 / 255, blue: 24 / 255, alpha: 1
 
 func siteURL() -> URL {
     let value = Bundle.main.object(forInfoDictionaryKey: "TaskOrbURL") as? String
-    return URL(string: value ?? "") ?? URL(string: "https://taskorbit-k762.onrender.com")!
+    return URL(string: value ?? "") ?? URL(string: "https://taskorb.app")!
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, NSWindowDelegate {

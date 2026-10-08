@@ -48,12 +48,12 @@ Health check: `/api/health`.
 
 The site installs as an app from the browser (Install button, or Share, Add to Home Screen on iPhone). Notifications can be pushed to the phone from the bell menu.
 
-`native/` holds the Android and iOS apps (Capacitor). They open the hosted site, sign in with the native Google sheet, and receive push notifications through Firebase Cloud Messaging. The site address comes from `TASKORB_URL` (default: the Render host).
+`native/` holds the Android and iOS apps (Capacitor). They open the hosted site, sign in with the native Google sheet, and receive push notifications through Firebase Cloud Messaging. The site address comes from `TASKORB_URL` (default: `https://taskorb.app`).
 
 ```bash
 cd native
 npm install
-TASKORB_URL=https://taskorb.app npx cap sync
+npx cap sync
 npx cap open android   # Android Studio: Build, Generate Signed App Bundle
 npx cap open ios       # Xcode: pick your team under Signing, then Product, Archive
 ```

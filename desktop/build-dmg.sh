@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Builds TaskOrb.app for Apple Silicon and Intel Macs and packs it into desktop/dist/TaskOrb.dmg.
-# TASKORB_URL=https://taskorb.app zsh desktop/build-dmg.sh   to point the app at another address.
+# TASKORB_URL=https://example.com zsh desktop/build-dmg.sh   to point the app at another address (default: taskorb.app).
 set -euo pipefail
 setopt null_glob
 cd "${0:A:h}"

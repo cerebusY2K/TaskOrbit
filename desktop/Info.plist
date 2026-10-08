@@ -33,6 +33,6 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>TaskOrbURL</key>
-	<string>https://taskorbit-k762.onrender.com</string>
+	<string>https://taskorb.app</string>
 </dict>
 </plist>

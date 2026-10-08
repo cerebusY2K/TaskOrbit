@@ -1,6 +1,6 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
-const url = process.env.TASKORB_URL ?? "https://taskorbit-k762.onrender.com";
+const url = process.env.TASKORB_URL ?? "https://taskorb.app";
 
 const config: CapacitorConfig = {
   appId: "app.taskorb",
