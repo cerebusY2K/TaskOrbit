@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { OrbitMark } from "@/components/LoginScreen";
+import { OrbitMark } from "@/components/OrbitMark";
 import {
   adminEmailAllowed,
   dayOf,

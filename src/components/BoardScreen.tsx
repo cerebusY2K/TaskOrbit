@@ -12,7 +12,7 @@ import { CardOrbit } from "./CardOrbit";
 import { DependencyDialog } from "./DependencyDialog";
 import { GanttView, type TimelineMode } from "./GanttView";
 import { InstallButton } from "./InstallButton";
-import { OrbitMark } from "./LoginScreen";
+import { OrbitMark } from "./OrbitMark";
 import { MemberSummary } from "./MemberSummary";
 import { MembersDialog } from "./MembersDialog";
 import { ghostBtn } from "./Modal";
