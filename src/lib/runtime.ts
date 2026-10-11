@@ -4,7 +4,6 @@ import type { PublicConfig } from "./api-client";
 import { BoardService } from "./board-service";
 import { BoardError } from "./errors";
 import { firebaseAdminConfigured, FirestoreStore } from "./firestore-store";
-import { createMailer } from "./mail";
 import { createPusher } from "./push";
 import { MemoryStore, type StoreSnapshot } from "./store";
 
@@ -76,11 +75,11 @@ export function getRuntime() {
   const appUrl = process.env.APP_URL || "http://localhost:3000";
   if (dataMode() === "local") {
     const store = fileStore();
-    return { store, service: new BoardService(store, appUrl, createPusher(appUrl), createMailer()) };
+    return { store, service: new BoardService(store, appUrl, createPusher(appUrl)) };
   }
   if (!globalStore.__depend) {
     const store = new FirestoreStore();
-    globalStore.__depend = { store, service: new BoardService(store, appUrl, createPusher(appUrl), createMailer()) };
+    globalStore.__depend = { store, service: new BoardService(store, appUrl, createPusher(appUrl)) };
   }
   return globalStore.__depend;
 }

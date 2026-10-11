@@ -8,10 +8,9 @@ import {
   normalizeEmail,
 } from "./domain";
 import { BoardError } from "./errors";
-import { boardInviteEmail, type Mailer } from "./mail";
 import type { Pusher } from "./push";
 import type { Store } from "./store";
-import type { Board, BoardMember, Card, Dependency, EmailStatus, PushDevice, SessionUser, UserProfile } from "./types";
+import type { Board, BoardMember, Card, Dependency, PushDevice, SessionUser, UserProfile } from "./types";
 import { OWNER_ASSIGNEE } from "./types";
 
 type Actor = SessionUser;
@@ -39,7 +38,6 @@ export class BoardService {
     private store: Store,
     private appUrl: string,
     private pusher: Pusher | null = null,
-    private mailer: Mailer | null = null,
   ) {}
 
   pushPublicKey() {
@@ -123,29 +121,8 @@ export class BoardService {
       throw new BoardError(`${email} is already a member of this board.`);
     }
     const member: BoardMember = { id: id(), name, email, uid: null, addedAt: now(), joinedAt: null };
-    const emailStatus = await this.emailInvite(actor, board, member);
-    if (emailStatus === "sent") member.invitedAt = now();
     await this.saveMembers(board, [...members, member]);
-    return { ...member, emailStatus };
-  }
-
-  async resendMemberInvite(actor: Actor, boardId: string, memberId: string) {
-    const board = await this.ownedBoard(actor, boardId);
-    const members = board.members ?? [];
-    const member = members.find((item) => item.id === memberId);
-    if (!member) throw new BoardError("Member not found.", 404);
-    if (member.uid) throw new BoardError(`${member.name} has already joined.`);
-    if (member.invitedAt && Date.now() - Date.parse(member.invitedAt) < 60_000) {
-      throw new BoardError("The invite was just sent. Give it a minute before sending again.", 429);
-    }
-    const emailStatus = await this.emailInvite(actor, board, member);
-    if (emailStatus === "sent") {
-      await this.saveMembers(
-        board,
-        members.map((item) => (item.id === member.id ? { ...item, invitedAt: now() } : item)),
-      );
-    }
-    return { emailStatus };
+    return member;
   }
 
   async removeMember(actor: Actor, boardId: string, memberId: string) {
@@ -192,12 +169,8 @@ export class BoardService {
 
   async boardInvite(actor: Actor, boardId: string, origin?: string) {
     const board = await this.ownedBoard(actor, boardId);
-    return this.publicInvite(await this.ensureBoardInvite(actor, board), origin);
-  }
-
-  private async ensureBoardInvite(actor: Actor, board: Board) {
     const existing = await this.store.findInviteByBoard(board.id);
-    return (
+    const invite =
       existing ??
       (await this.store.createInvite({
         id: id(),
@@ -208,33 +181,8 @@ export class BoardService {
         fromName: actor.name,
         acceptedBy: [],
         createdAt: now(),
-      }))
-    );
-  }
-
-  private async emailInvite(actor: Actor, board: Board, member: BoardMember): Promise<EmailStatus> {
-    const { url } = this.publicInvite(await this.ensureBoardInvite(actor, board));
-    const message = boardInviteEmail({
-      to: member.email,
-      memberName: member.name,
-      fromName: actor.name,
-      fromEmail: actor.email,
-      boardName: board.name,
-      url,
-    });
-    const outbox = { id: id(), to: message.to, subject: message.subject, text: message.text, html: message.html, createdAt: now() };
-    if (!this.mailer) {
-      await this.store.saveOutbox({ ...outbox, error: "Email is not configured." });
-      return "skipped";
-    }
-    try {
-      await this.mailer.send(message);
-      return "sent";
-    } catch (error) {
-      console.error("invite email failed", error);
-      await this.store.saveOutbox({ ...outbox, error: error instanceof Error ? error.message : String(error) });
-      return "failed";
-    }
+      }));
+    return this.publicInvite(invite, origin);
   }
 
   async leaveBoard(actor: Actor, boardId: string) {
