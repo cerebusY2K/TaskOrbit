@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/SiteFooter";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
 
 const FEATURES = [
@@ -63,11 +64,22 @@ const structuredData = {
   "@context": "https://schema.org",
   "@graph": [
     {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "TaskOrb",
+      url: `${SITE_URL}/`,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/icon-512.png`,
+      },
+    },
+    {
       "@type": "WebSite",
       "@id": `${SITE_URL}/#website`,
       url: `${SITE_URL}/`,
       name: "TaskOrb",
       description: SITE_DESCRIPTION,
+      publisher: { "@id": `${SITE_URL}/#organization` },
     },
     {
       "@type": "SoftwareApplication",
@@ -78,6 +90,7 @@ const structuredData = {
       description: SITE_DESCRIPTION,
       image: `${SITE_URL}/opengraph-image.png`,
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      publisher: { "@id": `${SITE_URL}/#organization` },
     },
     {
       "@type": "FAQPage",
@@ -159,9 +172,7 @@ export function Landing() {
         </a>
       </section>
 
-      <footer className="border-t border-white/10 px-5 py-8 text-center text-sm text-white/45">
-        © {new Date().getFullYear()} TaskOrb · <a href={SITE_URL} className="hover:text-white">taskorb.app</a>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
