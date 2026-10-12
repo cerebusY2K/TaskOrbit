@@ -34,7 +34,7 @@ export default async function TemplatePage({ params }: Props) {
 
   return (
     <article>
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#6da2ff]">
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent-soft">
         <Link href="/templates" className="hover:text-white">
           Templates
         </Link>
@@ -47,7 +47,7 @@ export default async function TemplatePage({ params }: Props) {
       </p>
       <Link
         href={useHref}
-        className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#0b1430] shadow-[0_8px_30px_rgba(77,132,255,0.35)] transition hover:bg-[#eef3ff]"
+        className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-surface shadow-[0_8px_30px_rgb(var(--accent)/0.35)] transition hover:bg-white/90"
       >
         Use this template
       </Link>
@@ -73,8 +73,8 @@ export default async function TemplatePage({ params }: Props) {
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
-                  {task.dependsOn ? <p className="mt-0.5 text-xs text-[#9dbcff]">Depends on: {task.dependsOn}</p> : null}
-                  {task.waitingFor ? <p className="mt-0.5 text-xs text-[#ffc56b]">Waiting for: {task.waitingFor}</p> : null}
+                  {task.dependsOn ? <p className="mt-0.5 text-xs text-accent-soft">Depends on: {task.dependsOn}</p> : null}
+                  {task.waitingFor ? <p className="mt-0.5 text-xs text-warn-soft">Waiting for: {task.waitingFor}</p> : null}
                   {task.nextAction ? <p className="mt-0.5 text-xs text-white/60">Next action: {task.nextAction}</p> : null}
                 </li>
               ))}
@@ -98,7 +98,7 @@ export default async function TemplatePage({ params }: Props) {
           Add the people involved and share the board&apos;s invite link, then give each task an owner. See{" "}
           <Link
             href="/task-dependencies"
-            className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white"
+            className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white"
           >
             how dependencies work
           </Link>
@@ -106,7 +106,7 @@ export default async function TemplatePage({ params }: Props) {
         </li>
         <li>
           Switch the board to{" "}
-          <Link href="/gantt" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+          <Link href="/gantt" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
             Timeline
           </Link>{" "}
           to see the plan as a Gantt chart, grouped by task or by person.
@@ -119,7 +119,7 @@ export default async function TemplatePage({ params }: Props) {
           <li key={item.slug}>
             <Link
               href={templatePath(item.slug)}
-              className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white"
+              className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white"
             >
               {item.name} template
             </Link>
@@ -135,7 +135,7 @@ export default async function TemplatePage({ params }: Props) {
         </p>
         <Link
           href={useHref}
-          className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#0b1430] shadow-[0_8px_30px_rgba(77,132,255,0.35)] transition hover:bg-[#eef3ff]"
+          className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-surface shadow-[0_8px_30px_rgb(var(--accent)/0.35)] transition hover:bg-white/90"
         >
           Use this template
         </Link>

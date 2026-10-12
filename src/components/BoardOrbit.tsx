@@ -9,6 +9,7 @@ import { InstallButton } from "./InstallButton";
 import { MyTasksPanel } from "./MyTasksPanel";
 import { OrbitMark } from "./OrbitMark";
 import { OrbitStage } from "./OrbitStage";
+import { ThemePicker } from "./ThemePicker";
 
 type Item = {
   board: Board;
@@ -80,12 +81,13 @@ export function BoardOrbit({
           >
             My tasks
             {myOverdue > 0 ? (
-              <span className="ml-1.5 rounded-full bg-[#ff6b57] px-1.5 py-0.5 text-[11px] font-semibold text-white" title="Overdue">
+              <span className="ml-1.5 rounded-full bg-danger px-1.5 py-0.5 text-[11px] font-semibold text-on-accent" title="Overdue">
                 {myOverdue}
               </span>
             ) : null}
           </button>
-          <InstallButton className="rounded-md bg-[#4d84ff] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[#3b70f0]" />
+          <InstallButton className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-on-accent transition hover:bg-accent-strong" />
+          <ThemePicker className="rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/20" />
           {payload.isAdmin ? (
             <a
               href="/admin"
@@ -130,7 +132,7 @@ export function BoardOrbit({
                   {item.tasks.map((task) => (
                     <li key={task.id} className="flex items-center justify-between gap-3 text-sm">
                       <span
-                        className={`truncate ${isOverdue(task.deadline, task.status, today) ? "text-[#ff9b85]" : "text-white/85"}`}
+                        className={`truncate ${isOverdue(task.deadline, task.status, today) ? "text-danger-soft" : "text-white/85"}`}
                       >
                         {task.name}
                       </span>

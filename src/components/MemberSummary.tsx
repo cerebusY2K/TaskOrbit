@@ -125,7 +125,7 @@ function Chip({
     >
       <span className="max-w-[10rem] truncate">{label}</span>
       {count !== undefined ? (
-        <span className={`rounded-full px-1.5 text-[11px] ${alert ? "bg-[#ff6b57]/25 text-[#ffb4a6]" : "bg-white/10 text-white/60"}`}>
+        <span className={`rounded-full px-1.5 text-[11px] ${alert ? "bg-danger/25 text-danger-soft" : "bg-white/10 text-white/60"}`}>
           {count}
         </span>
       ) : null}
@@ -162,7 +162,7 @@ function PersonDetail({ summary, onOpen }: { summary: PersonSummary; onOpen: (ta
                   {STATUS_LABELS[task.status]}
                   {dates ? ` · ${dates}` : ""}
                 </span>
-                {overdue ? <span className="shrink-0 text-xs font-semibold text-[#ff8f7a]">Overdue</span> : null}
+                {overdue ? <span className="shrink-0 text-xs font-semibold text-clay">Overdue</span> : null}
               </button>
             </li>
           ))}

@@ -155,7 +155,7 @@ export function CardOrbit({
                   {(item.isDone ? tasks : pending).slice(0, 3).map((task) => (
                     <li key={task.id} className="flex items-center justify-between gap-3 text-sm">
                       <span
-                        className={`truncate ${isOverdue(task.deadline, task.status, today) ? "text-[#ff9b85]" : "text-white/85"}`}
+                        className={`truncate ${isOverdue(task.deadline, task.status, today) ? "text-danger-soft" : "text-white/85"}`}
                       >
                         {task.name}
                       </span>
@@ -185,14 +185,14 @@ function TaskChip({ task, today, expanded }: { task: Dependency; today: string; 
         </span>
       </span>
       <span className="mt-0.5 block truncate text-xs text-white/55">
-        {overdue ? <span className="font-medium text-[#ff9b85]">Overdue · </span> : null}
+        {overdue ? <span className="font-medium text-danger-soft">Overdue · </span> : null}
         {STATUS_LABELS[task.status]}
         {dates ? ` · ${dates}` : ""}
       </span>
       {expanded ? (
         <span className="mt-2 grid gap-0.5 border-t border-white/10 pt-2 text-xs text-white/65">
           {task.taskOwner ? <span>Owner {task.taskOwner}</span> : null}
-          {task.status === "hold" && task.holdReason ? <span className="text-[#ffd27a]">Hold: {task.holdReason}</span> : null}
+          {task.status === "hold" && task.holdReason ? <span className="text-warn-soft">Hold: {task.holdReason}</span> : null}
           {task.nextAction ? <span>Next: {task.nextAction}</span> : null}
           {task.waitingFor ? <span>Waiting for {task.waitingFor}</span> : null}
           <span className="text-white/40">Click to open</span>

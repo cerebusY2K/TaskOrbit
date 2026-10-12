@@ -103,7 +103,7 @@ export function MembersDialog({
         <section className="grid gap-2">
           <h3 className="text-sm font-semibold text-white/80">People</h3>
           {isOwner && waiting && joined ? (
-            <p className="rounded-lg border border-[#4d84ff]/40 bg-[#4d84ff]/10 px-3 py-2 text-xs text-white/75">
+            <p className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs text-white/75">
               Someone joined with a different email? Use “Merge into” on their old entry. Its tasks move to the account they
               signed in with, and the old email goes away.
             </p>
@@ -124,7 +124,7 @@ export function MembersDialog({
                     {members.length > 1 ? (
                       <select
                         aria-label={`Merge ${member.name} into another member`}
-                        className="rounded-md border border-white/15 bg-[#0b1430] px-2 py-1 text-xs text-white/85"
+                        className="rounded-md border border-white/15 bg-surface px-2 py-1 text-xs text-white/85"
                         value=""
                         disabled={busy}
                         onChange={(event) => merge(member, event.target.value)}
@@ -264,7 +264,7 @@ function MemberRow({
         </div>
         <span
           className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-            joined ? "bg-[#22b07d]/15 text-[#7be0b5]" : "bg-white/10 text-white/50"
+            joined ? "bg-success/15 text-success-soft" : "bg-white/10 text-white/50"
           }`}
         >
           {badge}

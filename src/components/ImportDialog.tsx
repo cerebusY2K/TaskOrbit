@@ -102,7 +102,7 @@ export function ImportDialog({
                 </ul>
               ) : null}
               {result.warnings.length ? (
-                <ul className="mt-2 grid gap-0.5 text-xs text-[#ffcf8a]">
+                <ul className="mt-2 grid gap-0.5 text-xs text-warn-soft">
                   {result.warnings.map((warning) => (
                     <li key={warning}>{warning}</li>
                   ))}

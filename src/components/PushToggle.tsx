@@ -54,7 +54,7 @@ export function PushToggle() {
           <p className="text-white/70">Get a push notification when someone assigns you a task.</p>
           <button
             type="button"
-            className="shrink-0 rounded-lg bg-[#4d84ff] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#3b70f0]"
+            className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-on-accent hover:bg-accent-strong"
             disabled={busy}
             onClick={() => run(enablePush)}
           >

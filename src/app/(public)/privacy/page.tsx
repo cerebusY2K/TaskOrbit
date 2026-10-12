@@ -161,7 +161,7 @@ export default function PrivacyPage() {
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Changes</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         When this policy changes, the date at the top of this page changes with it. The{" "}
-        <Link href="/terms" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/terms" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           Terms of Service
         </Link>{" "}
         describe the rules for using the product.

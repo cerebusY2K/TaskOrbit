@@ -15,7 +15,7 @@ export default function TermsPage() {
         Questions about these terms go to <ContactLink />. These terms are governed by {GOVERNING_LAW}, and disputes
         are handled by the courts of India. By signing in or using a board, you agree to
         these terms and to the{" "}
-        <Link href="/privacy" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/privacy" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           Privacy Policy
         </Link>
         .

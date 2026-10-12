@@ -52,9 +52,9 @@ export function MyTasksPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex justify-end bg-[#02040b]/60 backdrop-blur-sm" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-30 flex justify-end bg-scrim/60 backdrop-blur-sm" onMouseDown={onClose}>
       <aside
-        className="h-full w-full max-w-md overflow-y-auto border-l border-white/10 bg-[#0a1228]/95 p-5 text-white shadow-xl"
+        className="h-full w-full max-w-md overflow-y-auto border-l border-white/10 bg-panel/95 p-5 text-white shadow-xl"
         aria-label="My tasks"
         onMouseDown={(event) => event.stopPropagation()}
       >
@@ -79,7 +79,7 @@ export function MyTasksPanel({
             <section key={group.key} className="mt-6">
               <h3
                 className={`text-xs font-semibold uppercase tracking-[0.15em] ${
-                  group.key === "overdue" ? "text-[#ff9b85]" : "text-white/50"
+                  group.key === "overdue" ? "text-danger-soft" : "text-white/50"
                 }`}
               >
                 {group.label} · {group.items.length}
@@ -94,7 +94,7 @@ export function MyTasksPanel({
                         aria-label={`Mark ${item.task.name} done`}
                         title="Mark done"
                         disabled={busy === item.task.id}
-                        className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-white/40 transition hover:border-[#22b07d] hover:bg-[#22b07d]/30 disabled:opacity-50"
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-white/40 transition hover:border-success hover:bg-success/30 disabled:opacity-50"
                         onClick={() => complete(item)}
                       />
                       <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(item)}>
@@ -105,7 +105,7 @@ export function MyTasksPanel({
                             {item.board.name} · {item.card.name}
                           </span>
                           {item.task.deadline ? (
-                            <span className={group.key === "overdue" ? "text-[#ff9b85]" : ""}>{shortDay(item.task.deadline)}</span>
+                            <span className={group.key === "overdue" ? "text-danger-soft" : ""}>{shortDay(item.task.deadline)}</span>
                           ) : null}
                           {item.task.priority ? <span>{PRIORITY_LABELS[item.task.priority]}</span> : null}
                           {item.task.status !== "open" ? <span>{STATUS_LABELS[item.task.status]}</span> : null}

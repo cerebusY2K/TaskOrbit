@@ -2,23 +2,123 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
+:root,
+[data-theme="midnight"] {
+  --fg: 255 255 255;
+  --accent: 77 132 255;
+  --accent-strong: 59 112 240;
+  --accent-soft: 157 188 255;
+  --surface: 11 20 48;
+  --surface-2: 13 23 51;
+  --panel: 10 18 40;
+  --scrim: 2 4 11;
+  --danger-soft: 255 155 133;
+  --danger-bg: 58 20 24;
+  --warn-soft: 255 210 122;
+  --success-soft: 123 224 181;
+  --bg-top: 19 32 74;
+  --bg-bottom: 4 6 15;
+  --glass: 13 23 51;
+  --glass-alpha: 0.72;
+  --shadow-alpha: 0.5;
+  --core: 207 226 255;
   color-scheme: dark;
+}
+
+[data-theme="aurora"] {
+  --accent: 20 170 130;
+  --accent-strong: 14 145 110;
+  --accent-soft: 120 226 190;
+  --surface: 8 34 34;
+  --surface-2: 9 38 38;
+  --panel: 6 28 28;
+  --scrim: 1 6 6;
+  --bg-top: 10 52 48;
+  --bg-bottom: 2 10 10;
+  --glass: 9 38 38;
+  --core: 200 255 235;
+}
+
+[data-theme="nebula"] {
+  --accent: 139 92 246;
+  --accent-strong: 124 58 237;
+  --accent-soft: 196 170 255;
+  --surface: 24 14 52;
+  --surface-2: 28 16 58;
+  --panel: 20 11 44;
+  --scrim: 4 2 10;
+  --bg-top: 44 22 88;
+  --bg-bottom: 7 4 16;
+  --glass: 28 16 58;
+  --core: 230 215 255;
+}
+
+[data-theme="ember"] {
+  --accent: 234 108 44;
+  --accent-strong: 214 90 28;
+  --accent-soft: 255 186 140;
+  --surface: 40 18 10;
+  --surface-2: 46 21 12;
+  --panel: 34 15 8;
+  --scrim: 8 3 2;
+  --bg-top: 70 28 12;
+  --bg-bottom: 12 5 3;
+  --glass: 46 21 12;
+  --core: 255 225 200;
+}
+
+[data-theme="rose"] {
+  --accent: 225 64 120;
+  --accent-strong: 200 45 100;
+  --accent-soft: 255 160 195;
+  --surface: 42 10 28;
+  --surface-2: 48 12 32;
+  --panel: 36 8 24;
+  --scrim: 8 2 5;
+  --bg-top: 74 16 46;
+  --bg-bottom: 12 3 8;
+  --glass: 48 12 32;
+  --core: 255 215 230;
+}
+
+[data-theme="daylight"] {
+  --fg: 17 24 39;
+  --accent: 59 102 230;
+  --accent-strong: 45 85 210;
+  --accent-soft: 37 84 200;
+  --surface: 255 255 255;
+  --surface-2: 255 255 255;
+  --panel: 245 247 252;
+  --scrim: 15 23 42;
+  --danger-soft: 200 50 30;
+  --danger-bg: 254 226 222;
+  --warn-soft: 160 100 0;
+  --success-soft: 10 130 90;
+  --bg-top: 222 231 255;
+  --bg-bottom: 246 248 252;
+  --glass: 255 255 255;
+  --glass-alpha: 0.86;
+  --shadow-alpha: 0.12;
+  --core: 255 255 255;
+  color-scheme: light;
+}
+
+html {
   scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
-  background: radial-gradient(120% 120% at 50% -20%, #13204a, #04060f 60%) fixed;
-  color: #fff;
+  background: radial-gradient(120% 120% at 50% -20%, rgb(var(--bg-top)), rgb(var(--bg-bottom)) 60%) fixed;
+  color: rgb(var(--fg));
 }
 
 .glass-panel {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(13, 23, 51, 0.72);
+  border: 1px solid rgb(var(--fg) / 0.1);
+  background: rgb(var(--glass) / var(--glass-alpha));
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 20px 60px rgb(0 0 0 / var(--shadow-alpha)),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
   backdrop-filter: blur(14px);
 }
 
@@ -44,15 +144,15 @@ body {
 
 .orbit-space {
   background:
-    radial-gradient(45% 40% at 50% 50%, rgba(56, 108, 220, 0.22), transparent 70%),
-    radial-gradient(120% 120% at 50% -20%, #13204a, #04060f 60%);
+    radial-gradient(45% 40% at 50% 50%, rgb(var(--accent) / 0.22), transparent 70%),
+    radial-gradient(120% 120% at 50% -20%, rgb(var(--bg-top)), rgb(var(--bg-bottom)) 60%);
 }
 
 .orbit-core {
   width: 14px;
   height: 14px;
-  background: radial-gradient(circle, #cfe2ff 0%, #6da2ff 45%, rgba(77, 132, 255, 0) 75%);
-  box-shadow: 0 0 40px 12px rgba(77, 132, 255, 0.35);
+  background: radial-gradient(circle, rgb(var(--core)) 0%, rgb(var(--accent-soft)) 45%, rgb(var(--accent) / 0) 75%);
+  box-shadow: 0 0 40px 12px rgb(var(--accent) / 0.35);
 }
 
 @media (prefers-reduced-motion: reduce) {

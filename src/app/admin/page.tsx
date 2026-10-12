@@ -31,7 +31,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <OrbitMark className="mx-auto h-12 w-12" />
         <h1 className="mt-4 text-2xl font-semibold">Sign in first</h1>
         <p className="mt-2 text-sm text-white/65">Sign in on the home page with your admin Google account, then come back here.</p>
-        <Link href="/" className="mt-6 inline-block rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#0b1430]">
+        <Link href="/" className="mt-6 inline-block rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-surface">
           Go to TaskOrb
         </Link>
       </main>
@@ -73,7 +73,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
             <Link
               key={option}
               href={`/admin?days=${option}`}
-              className={`rounded-lg px-3 py-1.5 ${option === range ? "bg-white text-[#0b1430] font-semibold" : "text-white/70 hover:text-white"}`}
+              className={`rounded-lg px-3 py-1.5 ${option === range ? "bg-white text-surface font-semibold" : "text-white/70 hover:text-white"}`}
             >
               {option === 365 ? "1 year" : `${option} days`}
             </Link>
@@ -108,7 +108,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
           <h2 className="text-base font-semibold">Visitors per day</h2>
           <p className="flex items-center gap-4 text-xs text-white/55">
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-[#4d84ff]" /> Visitors
+              <span className="h-2.5 w-2.5 rounded-sm bg-accent" /> Visitors
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-sm bg-white/15" /> Page views
@@ -177,7 +177,7 @@ function BreakdownList({
         <ul className="mt-3 space-y-1.5">
           {rows.map(([key, count]) => (
             <li key={key} className="relative flex items-center justify-between gap-3 overflow-hidden rounded-lg px-2.5 py-1.5 text-sm">
-              <span className="absolute inset-y-0 left-0 rounded-lg bg-[#4d84ff]/15" style={{ width: `${(count / max) * 100}%` }} />
+              <span className="absolute inset-y-0 left-0 rounded-lg bg-accent/15" style={{ width: `${(count / max) * 100}%` }} />
               <span className="relative truncate">{format(key)}</span>
               <span className="relative tabular-nums text-white/70">{count.toLocaleString("en-IN")}</span>
             </li>
@@ -202,8 +202,8 @@ function DailyChart({ days }: { days: DayStats[] }) {
     <svg viewBox={`0 0 ${width} ${height}`} className="mt-4 h-auto w-full" role="img" aria-label="Visitors per day">
       {[0.5, 1].map((fraction) => (
         <g key={fraction}>
-          <line x1={0} x2={width} y1={y(max * fraction)} y2={y(max * fraction)} stroke="rgba(255,255,255,0.08)" />
-          <text x={4} y={y(max * fraction) - 4} fontSize={11} fill="rgba(255,255,255,0.45)">
+          <line x1={0} x2={width} y1={y(max * fraction)} y2={y(max * fraction)} className="stroke-white/10" />
+          <text x={4} y={y(max * fraction) - 4} fontSize={11} className="fill-white/45">
             {Math.round(max * fraction)}
           </text>
         </g>
@@ -213,10 +213,10 @@ function DailyChart({ days }: { days: DayStats[] }) {
         return (
           <g key={day.day}>
             <title>{`${shortDate(day.day)}: ${day.visitors} visitors, ${day.views} views`}</title>
-            <rect x={x} width={bar} y={y(day.views)} height={y(0) - y(day.views)} rx={2} fill="rgba(255,255,255,0.13)" />
-            <rect x={x} width={bar} y={y(day.visitors)} height={y(0) - y(day.visitors)} rx={2} fill="#4d84ff" />
+            <rect x={x} width={bar} y={y(day.views)} height={y(0) - y(day.views)} rx={2} className="fill-white/15" />
+            <rect x={x} width={bar} y={y(day.visitors)} height={y(0) - y(day.visitors)} rx={2} className="fill-accent" />
             {index % labelEvery === 0 || (index === days.length - 1 && index % labelEvery >= labelEvery / 2) ? (
-              <text x={x + bar / 2} y={height - 8} fontSize={11} textAnchor="middle" fill="rgba(255,255,255,0.5)">
+              <text x={x + bar / 2} y={height - 8} fontSize={11} textAnchor="middle" className="fill-white/50">
                 {shortDate(day.day)}
               </text>
             ) : null}

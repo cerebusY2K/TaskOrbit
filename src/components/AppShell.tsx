@@ -163,7 +163,7 @@ export function AppShell({
   const notice = templateError ? (
     <p
       role="alert"
-      className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-clay/40 bg-[#1a0f1c] px-4 py-2 text-sm text-clay"
+      className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-clay/40 bg-danger-bg px-4 py-2 text-sm text-clay"
     >
       {templateError}
     </p>

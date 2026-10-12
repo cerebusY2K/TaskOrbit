@@ -42,9 +42,9 @@ export function BoardActivity({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-30 flex justify-end bg-[#02040b]/60 backdrop-blur-sm" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-30 flex justify-end bg-scrim/60 backdrop-blur-sm" onMouseDown={onClose}>
       <aside
-        className="h-full w-full max-w-md overflow-y-auto border-l border-white/10 bg-[#0a1228]/95 p-5 text-white shadow-xl"
+        className="h-full w-full max-w-md overflow-y-auto border-l border-white/10 bg-panel/95 p-5 text-white shadow-xl"
         aria-label="Board activity"
         onMouseDown={(event) => event.stopPropagation()}
       >

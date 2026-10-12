@@ -21,7 +21,7 @@ const ROWS = [
 export default function AsanaAlternativePage() {
   return (
     <article>
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#6da2ff]">Compare</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent-soft">Compare</p>
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">A simple, free Asana alternative for small teams</h1>
       <p className="mt-4 text-base leading-relaxed text-white/70">
         Asana is a full work-management platform for companies. TaskOrb is a much smaller tool: a task board with
@@ -64,12 +64,12 @@ export default function AsanaAlternativePage() {
         and the next action, so a{" "}
         <Link
           href="/task-dependencies"
-          className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white"
+          className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white"
         >
           blocked task says why
         </Link>
         . The{" "}
-        <Link href="/gantt" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/gantt" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           timeline
         </Link>{" "}
         is a Gantt chart of the board, grouped by task or by person, with overdue work marked in red.
@@ -94,7 +94,7 @@ export default function AsanaAlternativePage() {
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Getting started</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         There is no importer. Start from a{" "}
-        <Link href="/templates" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/templates" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           template
         </Link>{" "}
         such as a product launch or client onboarding plan, which comes with dated tasks and dependencies already in

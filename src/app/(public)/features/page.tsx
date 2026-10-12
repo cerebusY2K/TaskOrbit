@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { RelatedGuides, SignInPrompt } from "@/components/PublicChrome";
 import { publicMetadata } from "@/lib/site";
+import { BOARD_TEMPLATES } from "@/lib/templates";
 
 export const metadata = publicMetadata("/features");
 
 export default function FeaturesPage() {
   return (
     <article>
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#6da2ff]">TaskOrb</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent-soft">TaskOrb</p>
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">Task board features for a small team</h1>
       <p className="mt-4 text-base leading-relaxed text-white/70">
         TaskOrb is a free task board. Work is organised as boards, then cards, then tasks. You can look at the same
@@ -20,6 +21,18 @@ export default function FeaturesPage() {
         A board is a project or an area of work. The first time you sign in, TaskOrb creates five boards to start
         from: Work, Personal, Projects, Follow-ups and Ideas. You can rename them, recolour them, add more, or delete
         one. The app keeps at least one board.
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-white/70">
+        A new board can start blank or from one of {BOARD_TEMPLATES.length}{" "}
+        <Link href="/templates" className="text-accent-soft underline-offset-2 hover:underline">
+          templates
+        </Link>
+        , such as a two-week sprint, a content calendar or a product launch. The template fills in the cards and dated
+        tasks, and you can rename the board before you create it.
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-white/70">
+        The app comes in six colour themes: Midnight, Aurora, Nebula, Ember, Rose and a light Daylight theme. Pick one
+        from Theme in the top bar, and it is remembered on that device.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Cards sit on a board. They are the columns: a person, a workstream, a client, whatever the board is about.
@@ -69,7 +82,7 @@ export default function FeaturesPage() {
         </li>
         <li>
           <strong className="font-medium text-white/85">Timeline.</strong> A{" "}
-          <Link href="/gantt" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+          <Link href="/gantt" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
             Gantt chart of the board
           </Link>
           , grouped by task or by person. Tasks need a from date or a to date to appear as bars.
@@ -93,7 +106,7 @@ export default function FeaturesPage() {
         board. Separate fields record what it is waiting for, what it blocks, and the next action.{" "}
         <Link
           href="/task-dependencies"
-          className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white"
+          className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white"
         >
           How dependencies work
         </Link>

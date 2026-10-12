@@ -185,9 +185,9 @@ export function GanttView({
       <div className="glass-panel flex min-h-0 overflow-hidden rounded-2xl">
         <div ref={scroller} className="relative min-h-0 flex-1 overflow-auto">
           <div className="relative" style={{ width: LABEL + width }}>
-            <div className="sticky top-0 z-20 flex border-b border-white/10 bg-[#0b1430]/95 backdrop-blur">
+            <div className="sticky top-0 z-20 flex border-b border-white/10 bg-surface/95 backdrop-blur">
               <div
-                className="sticky left-0 z-30 shrink-0 border-r border-white/10 bg-[#0b1430] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white/50"
+                className="sticky left-0 z-30 shrink-0 border-r border-white/10 bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white/50"
                 style={{ width: LABEL }}
               >
                 {mode === "member" ? "Member" : "Task"}
@@ -212,7 +212,7 @@ export function GanttView({
                       <div
                         key={day}
                         className={`text-center text-[11px] leading-6 ${
-                          day === todayDay ? "font-semibold text-[#ff8f7a]" : weekend ? "text-white/35" : "text-white/55"
+                          day === todayDay ? "font-semibold text-clay" : weekend ? "text-white/35" : "text-white/55"
                         }`}
                         style={{ width: DAY }}
                       >
@@ -239,7 +239,7 @@ export function GanttView({
               </div>
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-y-0 z-10 w-0.5 bg-[#ff8f7a]/80"
+                className="pointer-events-none absolute inset-y-0 z-10 w-0.5 bg-clay/80"
                 style={{ left: LABEL + (todayDay - first) * DAY + DAY / 2 }}
               />
 
@@ -247,7 +247,7 @@ export function GanttView({
                 ? lanesByPerson.map(({ person, color, lanes }) => (
                     <div key={person.key} className="flex border-b border-white/[0.06]">
                       <div
-                        className="sticky left-0 z-10 flex shrink-0 items-center gap-2.5 border-r border-white/10 bg-[#0b1430] px-3"
+                        className="sticky left-0 z-10 flex shrink-0 items-center gap-2.5 border-r border-white/10 bg-surface px-3"
                         style={{ width: LABEL, minHeight: Math.max(1, lanes.length) * ROW + 8 }}
                       >
                         <span
@@ -301,7 +301,7 @@ export function GanttView({
                   <div key={group.card.id}>
                     <div className="flex h-8 items-center">
                       <div
-                        className="sticky left-0 z-10 flex h-full shrink-0 items-center gap-2 border-r border-white/10 bg-[#0d1733] px-3 text-xs font-semibold uppercase tracking-wide text-white/70"
+                        className="sticky left-0 z-10 flex h-full shrink-0 items-center gap-2 border-r border-white/10 bg-surface-2 px-3 text-xs font-semibold uppercase tracking-wide text-white/70"
                         style={{ width: LABEL }}
                       >
                         <span className="h-2 w-2 rounded-full" style={{ background: group.card.color }} />
@@ -312,7 +312,7 @@ export function GanttView({
                       <div key={task.id} className="relative flex items-center" style={{ height: ROW }}>
                         <button
                           type="button"
-                          className="sticky left-0 z-10 flex h-full shrink-0 items-center border-r border-white/10 bg-[#0b1430] px-3 text-left text-sm text-white/85 hover:text-white"
+                          className="sticky left-0 z-10 flex h-full shrink-0 items-center border-r border-white/10 bg-surface px-3 text-left text-sm text-white/85 hover:text-white"
                           style={{ width: LABEL }}
                           onClick={() => onOpen(group.card, task)}
                         >
@@ -341,11 +341,11 @@ export function GanttView({
           </span>
         ))}
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-4 rounded-sm ring-2 ring-[#ff6b57]" />
+          <span className="h-2.5 w-4 rounded-sm ring-2 ring-danger" />
           Overdue
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-3 w-0.5 bg-[#ff8f7a]" />
+          <span className="h-3 w-0.5 bg-clay" />
           Today
         </span>
       </div>
@@ -396,8 +396,8 @@ function TaskBar({
         type="button"
         title={`${task.name} · ${STATUS_LABELS[task.status]}`}
         aria-label={`${task.name}, ${STATUS_LABELS[task.status]}`}
-        className={`absolute top-1.5 flex items-center overflow-hidden rounded-md px-2 text-left text-xs font-medium text-white shadow-[0_4px_16px_rgba(0,0,0,0.35)] transition hover:brightness-110 ${
-          overdue ? "ring-2 ring-[#ff6b57]" : ""
+        className={`absolute top-1.5 flex items-center overflow-hidden rounded-md px-2 text-left text-xs font-medium text-on-accent shadow-[0_4px_16px_rgba(0,0,0,0.35)] transition hover:brightness-110 ${
+          overdue ? "ring-2 ring-danger" : ""
         } ${task.status === "done" ? "opacity-60" : ""}`}
         style={{
           left,

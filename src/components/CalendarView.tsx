@@ -100,7 +100,7 @@ export function CalendarView({
         title={`${task.name}${card ? ` · ${card.name}` : ""}`}
         className={`flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left transition hover:bg-white/15 ${
           compact ? "text-[11px]" : "text-sm"
-        } ${overdue ? "bg-[#ff6b57]/15 text-[#ffb4a6]" : "bg-white/[0.07] text-white/85"} ${
+        } ${overdue ? "bg-danger/15 text-danger-soft" : "bg-white/[0.07] text-white/85"} ${
           task.status === "done" ? "line-through opacity-50" : ""
         } ${dragId === task.id ? "opacity-40" : ""}`}
       >
@@ -165,11 +165,11 @@ export function CalendarView({
                 }}
                 className={`min-h-[104px] border-b border-r border-white/[0.07] p-1.5 ${
                   outside ? "bg-black/20 text-white/30" : "text-white/70"
-                } ${overDay === day ? "bg-[#4d84ff]/20" : ""}`}
+                } ${overDay === day ? "bg-accent/20" : ""}`}
               >
                 <div
                   className={`mb-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs ${
-                    day === today ? "bg-[#4d84ff] font-semibold text-white" : ""
+                    day === today ? "bg-accent font-semibold text-on-accent" : ""
                   }`}
                 >
                   {Number(day.slice(8))}
@@ -189,7 +189,7 @@ export function CalendarView({
         ) : (
           inMonth.map((day) => (
             <div key={day} className="rounded-xl border border-white/10 bg-white/[0.04] p-2">
-              <p className={`mb-1.5 text-xs font-medium ${day === today ? "text-[#8fb3ff]" : "text-white/60"}`}>
+              <p className={`mb-1.5 text-xs font-medium ${day === today ? "text-accent-soft" : "text-white/60"}`}>
                 {WEEKDAYS[(new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7]} {Number(day.slice(8))}
                 {day === today ? " · Today" : ""}
               </p>

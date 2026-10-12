@@ -21,7 +21,7 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-[#02040b]/70 p-3 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-40 flex items-end justify-center bg-scrim/70 p-3 backdrop-blur-sm sm:items-center"
       onMouseDown={onClose}
     >
       <div
@@ -49,13 +49,13 @@ export function Modal({
 }
 
 export const primaryBtn =
-  "inline-flex items-center justify-center rounded-lg bg-[#4d84ff] px-4 py-2 text-sm font-medium text-white shadow-[0_6px_24px_rgba(77,132,255,0.35)] transition hover:bg-[#3b70f0] disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent shadow-[0_6px_24px_rgb(var(--accent)/0.35)] transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-60";
 
 export const ghostBtn =
   "inline-flex items-center justify-center rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60";
 
 export const fieldClass =
-  "mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none ring-[#4d84ff] placeholder:text-white/35 focus:ring-2";
+  "mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none ring-accent placeholder:text-white/35 focus:ring-2";
 
 export function Field({
   label,

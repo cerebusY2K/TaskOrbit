@@ -20,7 +20,7 @@ export function PublicHeader() {
         ))}
         <Link
           href="/"
-          className="rounded-xl bg-white px-3 py-1.5 font-semibold text-[#0b1430] transition hover:bg-[#eef3ff]"
+          className="rounded-xl bg-white px-3 py-1.5 font-semibold text-surface transition hover:bg-white/90"
         >
           Open TaskOrb
         </Link>
@@ -36,7 +36,7 @@ export function SignInPrompt({ children }: { children: React.ReactNode }) {
       <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-white/65">{children}</p>
       <Link
         href="/"
-        className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#0b1430] shadow-[0_8px_30px_rgba(77,132,255,0.35)] transition hover:bg-[#eef3ff]"
+        className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-surface shadow-[0_8px_30px_rgb(var(--accent)/0.35)] transition hover:bg-white/90"
       >
         Sign in with Google
       </Link>
@@ -58,7 +58,7 @@ export function RelatedGuides({ current }: { current: string }) {
       <ul className="mt-4 space-y-2 text-sm">
         {pages.map((page) => (
           <li key={page.href}>
-            <Link href={page.href} className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+            <Link href={page.href} className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
               {page.label}
             </Link>
           </li>
@@ -70,7 +70,7 @@ export function RelatedGuides({ current }: { current: string }) {
 
 export function ContactLink() {
   return (
-    <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+    <a href={`mailto:${CONTACT_EMAIL}`} className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
       {CONTACT_EMAIL}
     </a>
   );

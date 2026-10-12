@@ -71,7 +71,7 @@ export const PUBLIC_PAGES: readonly PublicPage[] = [
     label: "Templates",
     title: "Free task board templates",
     description:
-      "Free project templates for TaskOrb: product launch, event planning, hiring and client onboarding boards with dated tasks and dependencies.",
+      "Free project templates for TaskOrb: product launch, sprints, content calendars, campaigns, hiring, onboarding and more, with dated tasks and dependencies.",
     changeFrequency: "weekly",
     priority: 0.8,
   },

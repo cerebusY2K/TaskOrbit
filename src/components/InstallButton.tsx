@@ -84,7 +84,7 @@ export function InstallButton({ className }: { className: string }) {
 
 function Step({ n }: { n: number }) {
   return (
-    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#4d84ff]/25 text-xs font-semibold text-[#9cc0ff]">
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/25 text-xs font-semibold text-accent-soft">
       {n}
     </span>
   );
@@ -92,7 +92,7 @@ function Step({ n }: { n: number }) {
 
 function ShareIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9cc0ff" strokeWidth="2" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent-soft" aria-hidden>
       <path d="M12 3v12M7 8l5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" strokeLinecap="round" />
     </svg>

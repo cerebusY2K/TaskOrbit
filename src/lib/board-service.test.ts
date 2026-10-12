@@ -463,6 +463,11 @@ describe("board", () => {
     expect(deploy.priority).toBe("urgent");
     expect(tasks.find((task) => task.id === deploy.dependantOnId)?.name).toBe("QA pass on staging");
     expect(tasks.find((task) => task.name === "Launch email")?.waitingFor).toBe("Release notes from Product");
+    const renamed = await service.createBoardFromTemplate(ada, "moving-house", "2026-10-30", {
+      name: "Flat move",
+      color: "#22B07D",
+    });
+    expect(renamed).toMatchObject({ name: "Flat move", color: "#22b07d" });
     await expect(service.createBoardFromTemplate(ada, "nope")).rejects.toThrow(/not found/);
     await expect(service.createBoardFromTemplate(ada, template.slug, "30/10/2026")).rejects.toThrow();
     await expect(service.createBoardFromTemplate(sam, template.slug)).rejects.toThrow(/Sign in/);

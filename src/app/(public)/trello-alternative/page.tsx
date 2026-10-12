@@ -23,7 +23,7 @@ const ROWS = [
 export default function TrelloAlternativePage() {
   return (
     <article>
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#6da2ff]">Compare</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent-soft">Compare</p>
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">
         A free Trello alternative that shows what each task is waiting on
       </h1>
@@ -67,7 +67,7 @@ export default function TrelloAlternativePage() {
         say why it is stuck, instead of sitting in a column. The{" "}
         <Link
           href="/task-dependencies"
-          className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white"
+          className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white"
         >
           task dependencies guide
         </Link>{" "}
@@ -75,7 +75,7 @@ export default function TrelloAlternativePage() {
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Every board also has a{" "}
-        <Link href="/gantt" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/gantt" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           timeline view
         </Link>{" "}
         that draws tasks from their from date to their to date, grouped by task or by person, so you can see whose
@@ -97,7 +97,7 @@ export default function TrelloAlternativePage() {
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Moving over</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         There is no importer. The quickest start is a{" "}
-        <Link href="/templates" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/templates" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           ready-made template
         </Link>
         , or one of the five starter boards you get on first sign-in. Make a card for each Trello list you still use,

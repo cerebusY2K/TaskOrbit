@@ -7,7 +7,7 @@ export const metadata = publicMetadata("/gantt");
 export default function GanttPage() {
   return (
     <article>
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#6da2ff]">Timeline</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent-soft">Timeline</p>
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">A free Gantt chart for small teams</h1>
       <p className="mt-4 text-base leading-relaxed text-white/70">
         Every TaskOrb board has a timeline view. It is a Gantt chart of that board&apos;s tasks, drawn from the from
@@ -47,7 +47,7 @@ export default function GanttPage() {
         depends on, what it is waiting for, and what it blocks. Those fields are described on the{" "}
         <Link
           href="/task-dependencies"
-          className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white"
+          className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white"
         >
           task dependencies page
         </Link>
@@ -61,7 +61,7 @@ export default function GanttPage() {
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Who it is for</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         It suits a person or a small team that already keeps work on a{" "}
-        <Link href="/features" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/features" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           task board
         </Link>{" "}
         and wants the dates visible without a separate Gantt product. Share the board with the people on it, assign

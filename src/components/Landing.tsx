@@ -109,7 +109,7 @@ export function Landing() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
 
       <section id="features" className="mx-auto max-w-6xl scroll-mt-8 px-5 py-20">
-        <p className="text-center text-sm font-medium uppercase tracking-[0.2em] text-[#6da2ff]">Task boards, in orbit</p>
+        <p className="text-center text-sm font-medium uppercase tracking-[0.2em] text-accent-soft">Task boards, in orbit</p>
         <h2 className="mx-auto mt-3 max-w-3xl text-center font-display text-3xl font-semibold tracking-tight sm:text-4xl">
           A task manager that shows what every task is waiting on
         </h2>
@@ -136,7 +136,7 @@ export function Landing() {
         <ol className="mt-10 grid gap-4 sm:grid-cols-3">
           {STEPS.map(([title, body], index) => (
             <li key={title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#4d84ff]/20 text-sm font-semibold text-[#9dbcff]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent-soft">
                 {index + 1}
               </span>
               <h3 className="mt-4 font-semibold">{title}</h3>
@@ -166,7 +166,7 @@ export function Landing() {
         <p className="mt-3 text-white/65">Free to use. Sign in with Google and your first board is ready.</p>
         <a
           href="#top"
-          className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#0b1430] shadow-[0_8px_30px_rgba(77,132,255,0.35)] transition hover:bg-[#eef3ff]"
+          className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-surface shadow-[0_8px_30px_rgb(var(--accent)/0.35)] transition hover:bg-white/90"
         >
           Get started
         </a>

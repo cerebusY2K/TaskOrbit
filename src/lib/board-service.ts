@@ -219,14 +219,22 @@ export class BoardService {
     return created;
   }
 
-  async createBoardFromTemplate(actor: Actor, slug: unknown, startDay?: unknown) {
+  async createBoardFromTemplate(
+    actor: Actor,
+    slug: unknown,
+    startDay?: unknown,
+    overrides: { name?: unknown; color?: unknown } = {},
+  ) {
     const template = typeof slug === "string" ? boardTemplate(slug) : null;
     if (!template) throw new BoardError("That template was not found.", 404);
     const today = assertDeadline(startDay, "Start day") ?? todayISO();
     const user = await this.store.getUser(actor.uid);
     if (!user) throw new BoardError("Sign in required.", 401);
     await this.ensureWorkspace(user);
-    const board = await this.createBoard(actor, { name: template.name, color: template.color });
+    const board = await this.createBoard(actor, {
+      name: overrides.name == null || overrides.name === "" ? template.name : overrides.name,
+      color: overrides.color == null || overrides.color === "" ? template.color : overrides.color,
+    });
     const day = (offset: number | undefined) => (offset === undefined ? null : shiftISO(today, offset));
     await Promise.all(
       template.cards.map(async (item) => {

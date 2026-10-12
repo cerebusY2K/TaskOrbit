@@ -3,6 +3,7 @@ import { Fraunces, Outfit } from "next/font/google";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { VisitTracker } from "@/components/VisitTracker";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/site";
+import { themeBootScript } from "@/lib/themes";
 import "./globals.css";
 
 const sans = Outfit({ subsets: ["latin"], variable: "--font-sans" });
@@ -47,7 +48,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript() }} />
+      </head>
       <body className={`${sans.variable} ${display.variable} font-sans antialiased`}>
         {children}
         <ServiceWorker />

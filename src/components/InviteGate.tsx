@@ -61,7 +61,7 @@ export function InviteGate({ token }: { token: string }) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
         <section className="w-full max-w-md glass-panel rounded-2xl p-6 text-white">
-          <p className="text-sm font-semibold text-[#8fb3ff]">TaskOrb</p>
+          <p className="text-sm font-semibold text-accent-soft">TaskOrb</p>
           <p role="alert" className="mt-3 text-sm text-clay">
             {error || config?.message || "This invite link is not valid."}
           </p>
@@ -74,7 +74,7 @@ export function InviteGate({ token }: { token: string }) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
         <section className="w-full max-w-md glass-panel rounded-2xl p-6 text-white">
-          <p className="text-sm font-semibold text-[#8fb3ff]">TaskOrb</p>
+          <p className="text-sm font-semibold text-accent-soft">TaskOrb</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
             {fromName} invited you{boardName ? ` to ${boardName}` : ""}
           </h1>
@@ -85,7 +85,7 @@ export function InviteGate({ token }: { token: string }) {
           </p>
           <button
             type="button"
-            className="mt-5 rounded-lg bg-[#4d84ff] hover:bg-[#3b70f0] px-4 py-2 text-sm font-medium text-white"
+            className="mt-5 rounded-lg bg-accent hover:bg-accent-strong px-4 py-2 text-sm font-medium text-on-accent"
             onClick={() => {
               accept().catch((err) => setError(err instanceof Error ? err.message : "Could not join."));
             }}

@@ -103,7 +103,7 @@ export function LoginScreen({
           {config.firebase ? (
             <button
               type="button"
-              className="mt-7 inline-flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-[#0b1430] shadow-[0_8px_30px_rgba(77,132,255,0.35)] transition hover:bg-[#eef3ff] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-7 inline-flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-surface shadow-[0_8px_30px_rgb(var(--accent)/0.35)] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={busy}
               onClick={signInGoogle}
             >

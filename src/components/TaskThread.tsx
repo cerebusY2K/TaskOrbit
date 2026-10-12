@@ -123,7 +123,7 @@ export function TaskThread({
           <div className="mt-3 grid gap-2">
             <textarea
               aria-label="Write a comment"
-              className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none ring-[#4d84ff] placeholder:text-white/35 focus:ring-2"
+              className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none ring-accent placeholder:text-white/35 focus:ring-2"
               rows={2}
               maxLength={2000}
               placeholder="Write a comment. Ctrl + Enter to send."

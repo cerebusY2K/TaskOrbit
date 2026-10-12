@@ -19,6 +19,7 @@ import {
 import type { Board, BoardPayload, Card, Dependency, Status } from "@/lib/types";
 import { OWNER_ASSIGNEE, PRIORITIES, PRIORITY_LABELS, REPEAT_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { BoardDialog } from "./BoardDialog";
+import { ThemePicker } from "./ThemePicker";
 import { CardDialog } from "./CardDialog";
 import { CardOrbit } from "./CardOrbit";
 import { DependencyDialog } from "./DependencyDialog";
@@ -353,7 +354,7 @@ export function BoardScreen({
           <button type="button" className={barBtn} onClick={() => setMyTasksOpen(true)}>
             My tasks
             {myOverdue > 0 ? (
-              <span className="ml-1.5 rounded-full bg-[#ff6b57] px-1.5 py-0.5 text-[11px] font-semibold text-white" title="Overdue">
+              <span className="ml-1.5 rounded-full bg-danger px-1.5 py-0.5 text-[11px] font-semibold text-on-accent" title="Overdue">
                 {myOverdue}
               </span>
             ) : null}
@@ -365,10 +366,11 @@ export function BoardScreen({
           <button type="button" className={`${barBtn} relative`} onClick={() => setNotesOpen(true)}>
             Notifications
             {unread > 0 ? (
-              <span className="ml-1.5 rounded-full bg-[#4d84ff] px-1.5 py-0.5 text-[11px] font-semibold text-white">{unread}</span>
+              <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[11px] font-semibold text-on-accent">{unread}</span>
             ) : null}
           </button>
           <InstallButton className={barBtn} />
+          <ThemePicker className={barBtn} />
           <button type="button" className={barBtn} onClick={onSignOut}>
             Sign out
           </button>
@@ -434,7 +436,7 @@ export function BoardScreen({
           type="search"
           aria-label="Search tasks"
           placeholder="Search tasks"
-          className="w-44 shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none ring-[#4d84ff] placeholder:text-white/40 focus:ring-2 sm:w-56"
+          className="w-44 shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none ring-accent placeholder:text-white/40 focus:ring-2 sm:w-56"
           value={filter.query}
           onChange={(event) => setFilter({ ...filter, query: event.target.value })}
         />
@@ -510,7 +512,7 @@ export function BoardScreen({
             </span>
             <button
               type="button"
-              className="shrink-0 rounded-lg px-2 py-1.5 text-sm text-[#8fb3ff] hover:bg-white/5 hover:text-white"
+              className="shrink-0 rounded-lg px-2 py-1.5 text-sm text-accent-soft hover:bg-white/5 hover:text-white"
               onClick={() => setFilter(EMPTY_FILTER)}
             >
               Clear
@@ -520,7 +522,7 @@ export function BoardScreen({
       </div>
 
       {error ? (
-        <p role="alert" className="relative mx-3 mb-2 rounded-lg border border-[#ff6b57]/40 bg-[#3a1418]/80 px-3 py-2 text-sm text-[#ffb4a6] sm:mx-5">
+        <p role="alert" className="relative mx-3 mb-2 rounded-lg border border-danger/40 bg-danger-bg/80 px-3 py-2 text-sm text-danger-soft sm:mx-5">
           {error}
         </p>
       ) : null}
@@ -627,7 +629,7 @@ export function BoardScreen({
                     <div className="flex items-center gap-2">
                       <h2 className="truncate text-sm font-semibold">{card.isSelf && !isOwner ? ownerName : card.name}</h2>
                       {card.isDone ? (
-                        <span className="rounded bg-[#22b07d]/20 px-1.5 py-0.5 text-[11px] font-medium text-[#7be0b5]">Auto</span>
+                        <span className="rounded bg-success/20 px-1.5 py-0.5 text-[11px] font-medium text-success-soft">Auto</span>
                       ) : null}
                       {card.isSelf && isOwner ? (
                         <span className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-medium text-white/70">You</span>
@@ -663,7 +665,7 @@ export function BoardScreen({
                         <li
                           key={dependency.id}
                           className={`rounded-xl border bg-white/[0.04] px-2 py-2 transition hover:bg-white/[0.07] ${
-                            overdue ? "dep-urgent border-[#ff6b57]/70" : "border-white/10"
+                            overdue ? "dep-urgent border-danger/70" : "border-white/10"
                           } ${dragging ? "opacity-40" : ""}`}
                         >
                           <div className="flex items-start gap-2">
@@ -719,7 +721,7 @@ export function BoardScreen({
                             <select
                               id={`status-${dependency.id}`}
                               aria-label={`Status for ${dependency.name}`}
-                              className="max-w-[7.2rem] rounded-md border border-white/15 bg-[#0b1430] px-1 py-0.5 text-xs text-white/85"
+                              className="max-w-[7.2rem] rounded-md border border-white/15 bg-surface px-1 py-0.5 text-xs text-white/85"
                               value={dependency.status}
                               disabled={!editable}
                               onChange={(event) => changeStatus(dependency, event.target.value as Status)}
@@ -786,7 +788,7 @@ export function BoardScreen({
                             ) : null}
                             {dependency.dependantOnLabel ? <span>Depends on {dependency.dependantOnLabel}</span> : null}
                             {mine ? (
-                              <span className="font-medium text-[#8fb3ff]">Assigned to you</span>
+                              <span className="font-medium text-accent-soft">Assigned to you</span>
                             ) : dependency.taskOwner ? (
                               <span>Owner {dependency.taskOwner}</span>
                             ) : null}
@@ -801,7 +803,7 @@ export function BoardScreen({
                           </div>
                           {dependency.notes ? <p className="mt-1 line-clamp-2 pl-6 text-xs text-white/55">{dependency.notes}</p> : null}
                           {dependency.status === "hold" && dependency.holdReason ? (
-                            <p className="mt-1 pl-6 text-xs text-[#ffd27a]">Hold: {dependency.holdReason}</p>
+                            <p className="mt-1 pl-6 text-xs text-warn-soft">Hold: {dependency.holdReason}</p>
                           ) : null}
                         </li>
                       );
@@ -865,8 +867,15 @@ export function BoardScreen({
                 }
               : undefined
           }
-          onSubmit={async (input) => {
-            if (boardDialog === "new") {
+          onSubmit={async ({ template, ...input }) => {
+            if (boardDialog === "new" && template) {
+              const created = await api<{ boardId: string }>("/api/templates", {
+                method: "POST",
+                body: JSON.stringify({ ...input, slug: template, today }),
+              });
+              setActiveBoardId(created.boardId);
+              setToast("Board added from the template.");
+            } else if (boardDialog === "new") {
               const created = await api<Board>("/api/boards", {
                 method: "POST",
                 body: JSON.stringify(input),
@@ -1022,9 +1031,9 @@ export function BoardScreen({
       ) : null}
 
       {notesOpen ? (
-        <div className="fixed inset-0 z-30 flex justify-end bg-[#02040b]/60 backdrop-blur-sm" onMouseDown={() => setNotesOpen(false)}>
+        <div className="fixed inset-0 z-30 flex justify-end bg-scrim/60 backdrop-blur-sm" onMouseDown={() => setNotesOpen(false)}>
           <aside
-            className="h-full w-full max-w-md overflow-y-auto border-l border-white/10 bg-[#0a1228]/95 p-5 text-white shadow-xl"
+            className="h-full w-full max-w-md overflow-y-auto border-l border-white/10 bg-panel/95 p-5 text-white shadow-xl"
             aria-label="Notifications"
             onMouseDown={(event) => event.stopPropagation()}
           >
@@ -1054,14 +1063,14 @@ export function BoardScreen({
                 board.notifications.map((item) => (
                   <li
                     key={item.id}
-                    className={`rounded-xl border px-3 py-3 ${item.read ? "border-white/10" : "border-[#4d84ff]/60 bg-[#4d84ff]/10"}`}
+                    className={`rounded-xl border px-3 py-3 ${item.read ? "border-white/10" : "border-accent/60 bg-accent/10"}`}
                   >
                     <p className="font-medium">{item.title}</p>
                     <p className="mt-1 text-sm text-white/60">{item.body}</p>
                     {item.read ? null : (
                       <button
                         type="button"
-                        className="mt-2 text-sm font-medium text-[#8fb3ff]"
+                        className="mt-2 text-sm font-medium text-accent-soft"
                         onClick={async () => {
                           await api("/api/notifications/read", {
                             method: "POST",
@@ -1086,7 +1095,7 @@ export function BoardScreen({
 
 function filterSelect(active: boolean) {
   return `shrink-0 rounded-lg border px-2 py-1.5 text-sm transition ${
-    active ? "border-[#4d84ff]/70 bg-[#4d84ff]/20 text-white" : "border-white/10 bg-[#0b1430]/80 text-white/75 hover:text-white"
+    active ? "border-accent/70 bg-accent/20 text-white" : "border-white/10 bg-surface/80 text-white/75 hover:text-white"
   }`;
 }
 
@@ -1095,7 +1104,7 @@ function ChecklistBadge({ done, total }: { done: number; total: number }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${
-        complete ? "bg-[#22b07d]/25 text-[#7be0b5]" : "bg-white/10 text-white/70"
+        complete ? "bg-success/25 text-success-soft" : "bg-white/10 text-white/70"
       }`}
       title={`Checklist: ${done} of ${total} done`}
     >

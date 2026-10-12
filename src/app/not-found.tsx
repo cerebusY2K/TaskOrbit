@@ -25,7 +25,7 @@ export default function NotFound() {
       <p className="mt-3 text-sm leading-relaxed text-white/65">That address is not part of TaskOrb.</p>
       <Link
         href="/"
-        className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#0b1430] transition hover:bg-[#eef3ff]"
+        className="mt-6 inline-block rounded-xl bg-white px-5 py-3 text-sm font-semibold text-surface transition hover:bg-white/90"
       >
         Back to TaskOrb
       </Link>

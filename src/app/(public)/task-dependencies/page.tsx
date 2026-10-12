@@ -7,7 +7,7 @@ export const metadata = publicMetadata("/task-dependencies");
 export default function DependenciesPage() {
   return (
     <article>
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#6da2ff]">Waiting on</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent-soft">Waiting on</p>
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">See what every task is waiting on</h1>
       <p className="mt-4 text-base leading-relaxed text-white/70">
         A status of &quot;in progress&quot; does not say why something else is stuck. TaskOrb keeps the blocker on the
@@ -47,7 +47,7 @@ export default function DependenciesPage() {
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Overdue is calculated, not a status you pick. If the to date is before today and the task is not done, the
         board shows it in red. On the simple board that task stays marked until you set it to done. The{" "}
-        <Link href="/gantt" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/gantt" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           Gantt chart
         </Link>{" "}
         draws a red ring on the same tasks. The timeline does not draw dependency arrows. Read the task to see what
@@ -61,7 +61,7 @@ export default function DependenciesPage() {
         rather than linked. Send blocks &quot;Publish the blog post&quot;, written in Blocks. If the quote slips,
         put Write on hold and say why. The owner, the dates and the red overdue mark are the same fields you already
         use on the{" "}
-        <Link href="/features" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/features" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           rest of the board
         </Link>
         .

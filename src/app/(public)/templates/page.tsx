@@ -8,7 +8,7 @@ export const metadata = publicMetadata("/templates");
 export default function TemplatesPage() {
   return (
     <article>
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#6da2ff]">Templates</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-accent-soft">Templates</p>
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">Free task board templates</h1>
       <p className="mt-4 text-base leading-relaxed text-white/70">
         Each template is a ready-made TaskOrb board. The cards are the teams or stages, and the tasks already have
@@ -24,7 +24,7 @@ export default function TemplatesPage() {
             style={{ borderTopColor: template.color, borderTopWidth: 3 }}
           >
             <h2 className="font-display text-xl font-semibold tracking-tight">
-              <Link href={templatePath(template.slug)} className="hover:text-[#9dbcff]">
+              <Link href={templatePath(template.slug)} className="hover:text-accent-soft">
                 {template.name}
               </Link>
             </h2>
@@ -36,13 +36,13 @@ export default function TemplatesPage() {
             <div className="mt-4 flex flex-wrap gap-3 text-sm">
               <Link
                 href={`/?template=${template.slug}`}
-                className="rounded-xl bg-white px-3 py-1.5 font-semibold text-[#0b1430] transition hover:bg-[#eef3ff]"
+                className="rounded-xl bg-white px-3 py-1.5 font-semibold text-surface transition hover:bg-white/90"
               >
                 Use this template
               </Link>
               <Link
                 href={templatePath(template.slug)}
-                className="px-1 py-1.5 text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white"
+                className="px-1 py-1.5 text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white"
               >
                 See the tasks
               </Link>
@@ -56,7 +56,7 @@ export default function TemplatesPage() {
         A new board named after the template, one card per team or stage, and a Done card. Tasks start as open with
         no owner. Where one task has to finish before another can start, the later task already depends on it. Where
         a task is waiting on something outside its card, the Waiting for field says what. Open the{" "}
-        <Link href="/gantt" className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+        <Link href="/gantt" className="text-accent-soft underline decoration-white/20 underline-offset-2 hover:text-white">
           timeline
         </Link>{" "}
         to see the whole plan as a Gantt chart, then share the board&apos;s invite link and assign the tasks.

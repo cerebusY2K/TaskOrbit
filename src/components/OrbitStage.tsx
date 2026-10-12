@@ -201,7 +201,7 @@ export function OrbitStage({
               itemRefs.current[index] = node;
             }}
             type="button"
-            className="absolute left-0 top-0 w-max max-w-[18rem] rounded-xl border border-white/10 bg-[#0d1733]/85 px-3 py-2 text-left shadow-[0_10px_40px_rgba(0,0,0,0.45)] outline-none backdrop-blur focus-visible:ring-2 focus-visible:ring-white/70 sm:px-4 sm:py-2.5"
+            className="absolute left-0 top-0 w-max max-w-[18rem] rounded-xl border border-white/10 bg-surface-2/85 px-3 py-2 text-left shadow-[0_10px_40px_rgba(0,0,0,0.45)] outline-none backdrop-blur focus-visible:ring-2 focus-visible:ring-white/70 sm:px-4 sm:py-2.5"
             style={{
               opacity: 0,
               boxShadow: hovered === index ? `0 0 0 1px ${entry.color}, 0 14px 50px rgba(0,0,0,0.55)` : undefined,

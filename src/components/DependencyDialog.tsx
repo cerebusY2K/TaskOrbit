@@ -424,7 +424,7 @@ function ChecklistField({ items, onChange }: { items: ChecklistItem[]; onChange:
       </div>
       {items.length ? (
         <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full rounded-full bg-[#22b07d] transition-[width]" style={{ width: `${(done / items.length) * 100}%` }} />
+          <div className="h-full rounded-full bg-success transition-[width]" style={{ width: `${(done / items.length) * 100}%` }} />
         </div>
       ) : null}
       <ul className="mt-2 grid gap-1">
@@ -433,7 +433,7 @@ function ChecklistField({ items, onChange }: { items: ChecklistItem[]; onChange:
             <input
               type="checkbox"
               aria-label={`Done: ${item.text}`}
-              className="h-4 w-4 shrink-0 accent-[#22b07d]"
+              className="h-4 w-4 shrink-0 accent-success"
               checked={item.done}
               onChange={(event) => update(item.id, { done: event.target.checked })}
             />
