@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { OrbitMark } from "@/components/OrbitMark";
-import { PUBLIC_PAGES } from "@/lib/site";
+import { CONTACT_EMAIL, PUBLIC_PAGES } from "@/lib/site";
 
 const HEADER_LINKS = ["/features", "/gantt", "/task-dependencies"] as const;
 
@@ -67,8 +67,10 @@ export function RelatedGuides({ current }: { current: string }) {
   );
 }
 
-export function Todo({ children }: { children: string }) {
+export function ContactLink() {
   return (
-    <span className="rounded bg-[#ffb547]/15 px-1.5 py-0.5 font-medium text-[#ffd7a8]">[TODO: {children}]</span>
+    <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#9dbcff] underline decoration-white/20 underline-offset-2 hover:text-white">
+      {CONTACT_EMAIL}
+    </a>
   );
 }

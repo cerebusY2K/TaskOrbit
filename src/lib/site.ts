@@ -7,7 +7,13 @@ export const SITE_TITLE = "TaskOrb – task boards that show what every task is 
 export const SITE_DESCRIPTION =
   "TaskOrb is a free task board for you and your team. Organise work into boards and cards, assign owners and dates, see what is blocked, and plan it on a timeline.";
 
-export const LEGAL_UPDATED = "8 October 2026";
+export const LEGAL_UPDATED = "12 October 2026";
+
+export const LEGAL_OPERATOR = "Serberus";
+
+export const CONTACT_EMAIL = "bot@taskorb.app";
+
+export const GOVERNING_LAW = "the laws of India";
 
 export type ChangeFrequency = "weekly" | "monthly" | "yearly";
 

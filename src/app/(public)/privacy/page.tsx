@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Todo } from "@/components/PublicChrome";
+import { ContactLink } from "@/components/PublicChrome";
+import { GOVERNING_LAW, LEGAL_OPERATOR } from "@/lib/site";
 import { LEGAL_UPDATED, publicMetadata } from "@/lib/site";
 
 export const metadata = publicMetadata("/privacy");
@@ -11,8 +12,8 @@ export default function PrivacyPage() {
       <p className="mt-3 text-sm text-white/50">Last updated {LEGAL_UPDATED}</p>
       <p className="mt-4 text-sm leading-relaxed text-white/70">
         TaskOrb is a free task board at taskorb.app. This page describes what the app actually collects and stores.
-        It is operated by <Todo>legal entity name</Todo>. To ask a question or request deletion of your account,
-        email <Todo>contact email</Todo>. Governing law and jurisdiction: <Todo>governing law and jurisdiction</Todo>.
+        It is operated by {LEGAL_OPERATOR}. To ask a question or request deletion of your account, email{" "}
+        <ContactLink />. This policy is governed by {GOVERNING_LAW}.
       </p>
 
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Your account</h2>
@@ -135,7 +136,7 @@ export default function PrivacyPage() {
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Board data stays until you delete it or until the account is removed. You can delete cards and tasks, and you
         can delete a board as long as you keep one. Removing a member deletes that membership. There is no button in
-        the app that deletes your whole account. Email <Todo>contact email</Todo> to ask for that, and for a copy of
+        the app that deletes your whole account. Email <ContactLink /> to ask for that, and for a copy of
         the account data we hold. The sign-in cookie expires after 14 days. The visitor cookie expires after about
         400 days. Daily visit totals are kept so the operator can see them.
       </p>
