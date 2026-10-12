@@ -51,6 +51,7 @@ export function RelatedGuides({ current }: { current: string }) {
     { href: "/templates", label: "Free task board templates" },
     { href: "/gantt", label: "Free Gantt chart for small teams" },
     { href: "/task-dependencies", label: "See what every task is waiting on" },
+    { href: "/blog", label: "Guides for small teams" },
   ].filter((page) => page.href !== current);
   return (
     <nav aria-label="Related" className="mt-10">

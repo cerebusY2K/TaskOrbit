@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
+import { BLOG_PAGES } from "@/lib/blog";
 import { PUBLIC_PAGES, SITE_URL, TEMPLATE_PAGES, fullTitle, pageMetadata, publicMetadata } from "@/lib/site";
 
 describe("public pages", () => {
@@ -13,6 +14,7 @@ describe("public pages", () => {
       "/gantt",
       "/task-dependencies",
       "/templates",
+      "/blog",
       "/trello-alternative",
       "/asana-alternative",
       "/privacy",
@@ -21,7 +23,7 @@ describe("public pages", () => {
   });
 
   it("gives every page a unique title and description", () => {
-    const pages = [...PUBLIC_PAGES, ...TEMPLATE_PAGES];
+    const pages = [...PUBLIC_PAGES, ...TEMPLATE_PAGES, ...BLOG_PAGES];
     const titles = pages.map((page) => fullTitle(page));
     const descriptions = pages.map((page) => page.description);
     expect(new Set(titles).size).toBe(titles.length);
@@ -35,7 +37,9 @@ describe("public pages", () => {
   it("puts every public page in the sitemap and nowhere private", () => {
     const urls = sitemap().map((entry) => entry.url);
     expect(urls).toEqual(
-      [...PUBLIC_PAGES, ...TEMPLATE_PAGES].map((page) => (page.path === "/" ? `${SITE_URL}/` : `${SITE_URL}${page.path}`)),
+      [...PUBLIC_PAGES, ...TEMPLATE_PAGES, ...BLOG_PAGES].map((page) =>
+        page.path === "/" ? `${SITE_URL}/` : `${SITE_URL}${page.path}`,
+      ),
     );
     expect(urls).toContain(`${SITE_URL}/templates/product-launch`);
     expect(urls.some((url) => /\/(admin|api|invite)(\/|$)/.test(url))).toBe(false);
