@@ -33,8 +33,13 @@ export default function PrivacyPage() {
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Everything you put on a board is stored: board and card names and colours, and for each task the name, owner,
         priority, status, from and to dates, what it depends on, what it is waiting for, what it blocks, the next
-        action, notes, labels, checklist items, a reason when it is on hold, and the times it was created and last
-        changed.
+        action, notes, labels, checklist items, whether it repeats, a reason when it is on hold, and the times it was
+        created and last changed.
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-white/70">
+        When you import a board from a Trello or CSV file, the file is read in your browser. Only the board name, the
+        cards and the tasks it contains are sent to TaskOrb and stored like any other board. The file itself is not
+        uploaded or kept.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Comments on a task are stored with the author&apos;s name and the time. Each board also keeps an activity

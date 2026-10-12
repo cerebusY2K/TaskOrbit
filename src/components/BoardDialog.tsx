@@ -9,12 +9,14 @@ export function BoardDialog({
   onClose,
   onSubmit,
   onDelete,
+  onImport,
 }: {
   board?: { name: string; color: string };
   canDelete?: boolean;
   onClose: () => void;
   onSubmit: (input: { name: string; color: string }) => Promise<void>;
   onDelete?: () => Promise<void>;
+  onImport?: () => void;
 }) {
   const [name, setName] = useState(board?.name ?? "");
   const [color, setColor] = useState(board?.color ?? "#6554c0");
@@ -53,6 +55,14 @@ export function BoardDialog({
             <span className="text-sm text-white/60">This color tints the board and its orbit.</span>
           </div>
         </Field>
+        {onImport ? (
+          <p className="-mt-1 text-sm text-white/60">
+            Moving from Trello, Asana or a spreadsheet?{" "}
+            <button type="button" className="text-[#8fb3ff] underline-offset-2 hover:text-white hover:underline" onClick={onImport}>
+              Import a board
+            </button>
+          </p>
+        ) : null}
         {error ? (
           <p role="alert" className="text-sm text-clay">
             {error}

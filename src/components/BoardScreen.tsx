@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api-client";
-import { isOverdue, todayISO } from "@/lib/domain";
+import { addDaysISO, daysBetween, isOverdue, todayISO } from "@/lib/domain";
 import { EVERYONE, summarizeMembers } from "@/lib/member-summary";
 import {
   EMPTY_FILTER,
@@ -17,7 +17,7 @@ import {
   type TaskFilter,
 } from "@/lib/task-filters";
 import type { Board, BoardPayload, Card, Dependency, Status } from "@/lib/types";
-import { OWNER_ASSIGNEE, PRIORITIES, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
+import { OWNER_ASSIGNEE, PRIORITIES, PRIORITY_LABELS, REPEAT_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { BoardDialog } from "./BoardDialog";
 import { CardDialog } from "./CardDialog";
 import { CardOrbit } from "./CardOrbit";
@@ -30,6 +30,8 @@ import { MembersDialog } from "./MembersDialog";
 import { MyTasksPanel } from "./MyTasksPanel";
 import { ghostBtn } from "./Modal";
 import { BoardActivity } from "./BoardActivity";
+import { CalendarView } from "./CalendarView";
+import { ImportDialog } from "./ImportDialog";
 import { OrbitBackdrop } from "./OrbitBackdrop";
 import { PushToggle } from "./PushToggle";
 import { toRgb } from "./orbit-math";
@@ -43,14 +45,14 @@ function formatDay(iso: string) {
   });
 }
 
-type BoardView = "orbit" | "board" | "timeline";
+type BoardView = "orbit" | "board" | "timeline" | "calendar";
 const VIEW_KEY = "taskorb-board-view";
-const VIEW_LABELS: Record<BoardView, string> = { orbit: "Orbit", board: "Simple", timeline: "Timeline" };
+const VIEW_LABELS: Record<BoardView, string> = { orbit: "Orbit", board: "Simple", timeline: "Timeline", calendar: "Calendar" };
 
 function savedView(): BoardView {
   if (typeof window === "undefined") return "orbit";
   const value = window.localStorage.getItem(VIEW_KEY);
-  return value === "board" || value === "timeline" ? value : "orbit";
+  return value === "board" || value === "timeline" || value === "calendar" ? value : "orbit";
 }
 
 function sortDependencies(items: Dependency[], today: string) {
@@ -92,6 +94,7 @@ export function BoardScreen({
   const [membersOpen, setMembersOpen] = useState(false);
   const [myTasksOpen, setMyTasksOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [filter, setFilter] = useState<TaskFilter>(EMPTY_FILTER);
   const [view, setViewState] = useState<BoardView>(savedView);
   const setView = (next: BoardView) => {
@@ -410,7 +413,7 @@ export function BoardScreen({
           </button>
         ) : null}
         <div role="group" aria-label="View" className="ml-auto flex shrink-0 rounded-full bg-white/5 p-0.5">
-          {(["orbit", "board", "timeline"] as const).map((option) => (
+          {(["orbit", "board", "timeline", "calendar"] as const).map((option) => (
             <button
               key={option}
               type="button"
@@ -527,7 +530,29 @@ export function BoardScreen({
         </p>
       ) : null}
 
-      {view === "timeline" ? (
+      {view === "calendar" ? (
+        <CalendarView
+          tasks={boardTasks.filter(visible)}
+          cards={cards}
+          today={today}
+          canEdit={canEdit}
+          onOpen={openTask}
+          onReschedule={async (task, deadline) => {
+            try {
+              const shift = task.deadline ? daysBetween(task.deadline, deadline) : 0;
+              await api(`/api/dependencies/${task.id}`, {
+                method: "PATCH",
+                body: JSON.stringify({ deadline, startDate: task.startDate ? addDaysISO(task.startDate, shift) : null }),
+              });
+              setError(null);
+              setToast(`Moved "${task.name}" to ${new Date(`${deadline}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" })}.`);
+              await onReload();
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Could not change the date.");
+            }
+          }}
+        />
+      ) : view === "timeline" ? (
         <div className="relative flex min-h-0 flex-1 flex-col lg:flex-row">
           <GanttView
             cards={cards}
@@ -706,7 +731,7 @@ export function BoardScreen({
                               ))}
                             </select>
                           </div>
-                          {dependency.labels.length || dependency.checklist.length ? (
+                          {dependency.labels.length || dependency.checklist.length || dependency.repeat ? (
                             <div className="mt-1.5 flex flex-wrap items-center gap-1 pl-6">
                               {dependency.labels.map((label) => (
                                 <button
@@ -722,6 +747,15 @@ export function BoardScreen({
                               ))}
                               {dependency.checklist.length ? (
                                 <ChecklistBadge {...checklistProgress(dependency)} />
+                              ) : null}
+                              {dependency.repeat ? (
+                                <span
+                                  className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[11px] text-white/60"
+                                  title={`Repeats ${REPEAT_LABELS[dependency.repeat].toLowerCase()}`}
+                                >
+                                  <span aria-hidden="true">↻</span>
+                                  {REPEAT_LABELS[dependency.repeat]}
+                                </span>
                               ) : null}
                             </div>
                           ) : null}
@@ -813,6 +847,14 @@ export function BoardScreen({
           board={boardDialog === "new" ? undefined : boardDialog}
           canDelete={workspaces.length > 1}
           onClose={() => setBoardDialog(null)}
+          onImport={
+            boardDialog === "new"
+              ? () => {
+                  setBoardDialog(null);
+                  setImportOpen(true);
+                }
+              : undefined
+          }
           onDelete={
             boardDialog !== "new"
               ? async () => {
@@ -932,6 +974,18 @@ export function BoardScreen({
             setMembersOpen(false);
             setActiveBoardId(null);
             setToast(`You left ${active.name}.`);
+            await onReload();
+          }}
+        />
+      ) : null}
+
+      {importOpen ? (
+        <ImportDialog
+          onClose={() => setImportOpen(false)}
+          onImported={async (result) => {
+            setActiveBoardId(result.boardId);
+            setError(null);
+            setToast(`Imported ${result.tasks} task${result.tasks === 1 ? "" : "s"} on ${result.cards} card${result.cards === 1 ? "" : "s"}.`);
             await onReload();
           }}
         />

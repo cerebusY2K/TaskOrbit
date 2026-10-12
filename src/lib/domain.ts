@@ -1,4 +1,4 @@
-import { CARD_COLORS, PRIORITIES, STATUSES, type Priority, type Status } from "./types";
+import { CARD_COLORS, PRIORITIES, REPEATS, STATUSES, type Priority, type Repeat, type Status } from "./types";
 import { BoardError } from "./errors";
 import type { ChecklistItem, Dependency } from "./types";
 
@@ -113,6 +113,46 @@ export function assertChecklist(value: unknown): ChecklistItem[] {
   return items;
 }
 
+export function assertRepeat(value: unknown): Repeat | null {
+  if (value == null || value === "" || value === "none") return null;
+  if (typeof value !== "string" || !REPEATS.includes(value as Repeat)) {
+    throw new BoardError("Repeat must be daily, weekly or monthly.");
+  }
+  return value as Repeat;
+}
+
+export function addDaysISO(iso: string, days: number): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
+export function daysBetween(from: string, to: string): number {
+  const [a, b] = [from, to].map((iso) => {
+    const [year, month, day] = iso.split("-").map(Number);
+    return Date.UTC(year, month - 1, day);
+  });
+  return Math.round((b - a) / 86_400_000);
+}
+
+function addMonthsISO(iso: string, months: number): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(year, month - 1 + months + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(year, month - 1 + months, Math.min(day, lastDay))).toISOString().slice(0, 10);
+}
+
+/** The first repeat of `deadline` that falls on or after `today`. Monthly repeats keep the day of the month where it exists. */
+export function nextRepeatDate(deadline: string, repeat: Repeat, today: string): string {
+  if (repeat !== "monthly") {
+    const step = repeat === "weekly" ? 7 : 1;
+    const behind = Math.max(0, daysBetween(deadline, today));
+    return addDaysISO(deadline, Math.max(1, Math.ceil(behind / step)) * step);
+  }
+  for (let months = 1; ; months += 1) {
+    const next = addMonthsISO(deadline, months);
+    if (next >= today) return next;
+  }
+}
+
 export type DependencyDraft = {
   name: string;
   startDate: string | null;
@@ -129,6 +169,7 @@ export type DependencyDraft = {
   notes: string | null;
   labels: string[];
   checklist: ChecklistItem[];
+  repeat: Repeat | null;
 };
 
 export function assertDependencyDraft(
@@ -148,6 +189,7 @@ export function assertDependencyDraft(
     notes?: unknown;
     labels?: unknown;
     checklist?: unknown;
+    repeat?: unknown;
   },
   siblings: Dependency[],
   selfId: string | null,
@@ -158,6 +200,8 @@ export function assertDependencyDraft(
   if (startDate && deadline && deadline < startDate) {
     throw new BoardError("The To date cannot be before the From date.");
   }
+  const repeat = assertRepeat(input.repeat);
+  if (repeat && !deadline) throw new BoardError("Set a To date so the task knows when to repeat.");
   const status = assertStatus(input.status ?? "open");
   let holdReason: string | null = null;
   if (status === "hold") {
@@ -205,6 +249,7 @@ export function assertDependencyDraft(
     notes: optionalText(input.notes, "Notes", 2000),
     labels: assertLabels(input.labels),
     checklist: assertChecklist(input.checklist),
+    repeat,
   };
 }
 

@@ -11,7 +11,8 @@ export default function FeaturesPage() {
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">Task board features for a small team</h1>
       <p className="mt-4 text-base leading-relaxed text-white/70">
         TaskOrb is a free task board. Work is organised as boards, then cards, then tasks. You can look at the same
-        work as an orbit, as a plain board, or as a timeline, and each task can say what it is waiting on.
+        work as an orbit, as a plain board, as a timeline or as a calendar, and each task can say what it is waiting
+        on.
       </p>
 
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Boards, cards and tasks</h2>
@@ -30,6 +31,10 @@ export default function FeaturesPage() {
         plus labels, a checklist and notes. The status is open, in progress, on hold or done. On hold asks for a reason. If the to date has
         passed and the task is not done, TaskOrb marks it overdue in red. The board records the last time the task
         changed.
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-white/70">
+        A task with a to date can repeat every day, week or month. When you finish it, a fresh copy is added to the
+        same card with the next to date and the checklist unticked.
       </p>
 
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Find your work</h2>
@@ -51,7 +56,7 @@ export default function FeaturesPage() {
         assigned, moved or finished what, and when.
       </p>
 
-      <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Three ways to see the same board</h2>
+      <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Four ways to see the same board</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-white/70">
         <li>
           <strong className="font-medium text-white/85">Orbit.</strong> Your boards orbit the workspace. Open one and
@@ -69,7 +74,18 @@ export default function FeaturesPage() {
           </Link>
           , grouped by task or by person. Tasks need a from date or a to date to appear as bars.
         </li>
+        <li>
+          <strong className="font-medium text-white/85">Calendar.</strong> A month view of tasks by their to date.
+          Drag a task to another day to move its dates. On a phone it becomes a list of the days that have work.
+        </li>
       </ul>
+
+      <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Bring your boards with you</h2>
+      <p className="mt-3 text-sm leading-relaxed text-white/70">
+        Import a board from a Trello JSON export, or from a CSV file out of Asana, a spreadsheet or another tool.
+        Lists or sections become cards, and the tasks keep their due dates, labels, checklists and descriptions.
+        Finished work goes straight to the Done card. Owners are not imported, so assign tasks afterwards.
+      </p>
 
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">What a task is waiting on</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">

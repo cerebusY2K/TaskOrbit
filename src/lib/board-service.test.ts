@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BoardService, DEFAULT_BOARDS } from "./board-service";
-import { isOverdue } from "./domain";
+import { isOverdue, nextRepeatDate } from "./domain";
 import { MemoryStore } from "./store";
 import { boardTemplate, templateTaskCount } from "./templates";
 import type { SessionUser } from "./types";
@@ -31,6 +31,19 @@ describe("deadline urgency", () => {
     expect(isOverdue("2026-10-05", "wip", "2026-10-05")).toBe(false);
     expect(isOverdue("2026-10-04", "done", "2026-10-05")).toBe(false);
     expect(isOverdue(null, "open", "2026-10-05")).toBe(false);
+  });
+});
+
+describe("repeat dates", () => {
+  it("finds the next repeat on or after today", () => {
+    expect(nextRepeatDate("2026-10-12", "weekly", "2026-10-12")).toBe("2026-10-19");
+    expect(nextRepeatDate("2026-10-05", "weekly", "2026-10-20")).toBe("2026-10-26");
+    expect(nextRepeatDate("2026-10-05", "weekly", "2026-10-19")).toBe("2026-10-19");
+    expect(nextRepeatDate("2026-10-12", "daily", "2026-10-01")).toBe("2026-10-13");
+    expect(nextRepeatDate("2026-10-01", "daily", "2026-10-12")).toBe("2026-10-12");
+    expect(nextRepeatDate("2026-01-31", "monthly", "2026-01-31")).toBe("2026-02-28");
+    expect(nextRepeatDate("2026-08-15", "monthly", "2026-10-20")).toBe("2026-11-15");
+    expect(nextRepeatDate("2026-12-20", "monthly", "2026-12-01")).toBe("2027-01-20");
   });
 });
 
@@ -581,5 +594,117 @@ describe("comments, activity and reminders", () => {
       "2026-11-03:overdue",
     );
     await expect(service.sendReminders("tomorrow")).rejects.toThrow();
+  });
+});
+
+describe("repeating tasks", () => {
+  it("adds the next copy when a repeating task is finished, once", async () => {
+    const { service } = setup();
+    await service.signIn(ada);
+    const me = (await service.board(ada)).cards.find((card) => card.isSelf)!;
+    await expect(
+      service.createDependency(ada, { cardId: me.id, name: "No date", status: "open", repeat: "weekly" }),
+    ).rejects.toThrow(/To date/);
+    const { dependency } = await service.createDependency(ada, {
+      cardId: me.id,
+      name: "Weekly report",
+      status: "open",
+      startDate: "2099-10-31",
+      deadline: "2099-11-02",
+      labels: ["Ops"],
+      checklist: [{ text: "Collect numbers", done: true }],
+      repeat: "weekly",
+    });
+
+    await service.updateDependency(ada, dependency.id, { status: "done" });
+    let tasks = (await service.board(ada)).dependencies.filter((task) => task.name === "Weekly report");
+    expect(tasks).toHaveLength(2);
+    const finished = tasks.find((task) => task.id === dependency.id)!;
+    const next = tasks.find((task) => task.id !== dependency.id)!;
+    expect(finished).toMatchObject({ status: "done", repeat: null });
+    expect(next).toMatchObject({
+      cardId: me.id,
+      status: "open",
+      startDate: "2099-11-07",
+      deadline: "2099-11-09",
+      labels: ["Ops"],
+      repeat: "weekly",
+    });
+    expect(next.checklist).toEqual([expect.objectContaining({ text: "Collect numbers", done: false })]);
+
+    await service.updateDependency(ada, dependency.id, { status: "open" });
+    await service.updateDependency(ada, dependency.id, { status: "done" });
+    tasks = (await service.board(ada)).dependencies.filter((task) => task.name === "Weekly report");
+    expect(tasks).toHaveLength(2);
+
+    const doneCard = (await service.board(ada)).cards.find((card) => card.boardId === me.boardId && card.isDone)!;
+    await service.moveDependency(ada, next.id, doneCard.id);
+    tasks = (await service.board(ada)).dependencies.filter((task) => task.name === "Weekly report");
+    expect(tasks.map((task) => task.deadline).sort()).toEqual(["2099-11-02", "2099-11-09", "2099-11-16"]);
+    expect(tasks.find((task) => task.deadline === "2099-11-16")).toMatchObject({ cardId: me.id, status: "open" });
+
+    const activity = await service.boardActivity(ada, me.boardId);
+    expect(activity.map((entry) => entry.text)).toContain('repeated "Weekly report", next due 16 Nov 2099');
+  });
+});
+
+describe("importing a board", () => {
+  const task = (name: string, extra: Record<string, unknown> = {}) => ({
+    name,
+    status: "open",
+    holdReason: null,
+    startDate: null,
+    deadline: null,
+    priority: null,
+    labels: [],
+    checklist: [],
+    notes: null,
+    ...extra,
+  });
+
+  it("creates the board, its cards and tasks, with finished tasks on Done", async () => {
+    const { service } = setup();
+    await service.signIn(ada);
+    const result = await service.importBoard(ada, {
+      name: "Website relaunch",
+      source: "Trello",
+      cards: [
+        { name: "To Do", tasks: [task("Write copy", { deadline: "2026-11-02", labels: ["Design"] })] },
+        { name: "Doing", tasks: [task("Build header", { status: "done" })] },
+        { name: "Later", tasks: [] },
+      ],
+      done: [task("Kickoff", { checklist: [{ text: "Agenda", done: true }] })],
+    });
+    expect(result).toMatchObject({ cards: 3, tasks: 3 });
+
+    const loaded = await service.board(ada);
+    const cards = loaded.cards.filter((card) => card.boardId === result.boardId);
+    expect(cards.map((card) => card.name).sort()).toEqual(["Doing", "Done", "Later", "To Do"]);
+    const doneCard = cards.find((card) => card.isDone)!;
+    const tasks = loaded.dependencies.filter((item) => cards.some((card) => card.id === item.cardId));
+    expect(tasks.find((item) => item.name === "Write copy")).toMatchObject({ deadline: "2026-11-02", labels: ["Design"] });
+    expect(tasks.filter((item) => item.cardId === doneCard.id).map((item) => item.name).sort()).toEqual([
+      "Build header",
+      "Kickoff",
+    ]);
+    expect(tasks.every((item) => item.cardId !== doneCard.id || item.status === "done")).toBe(true);
+    const activity = await service.boardActivity(ada, result.boardId);
+    expect(activity[0]?.text).toBe("imported 3 cards and 3 tasks from Trello");
+  });
+
+  it("validates everything the browser sends", async () => {
+    const { service } = setup();
+    await service.signIn(ada);
+    await expect(service.importBoard(ada, { name: "X", cards: "nope" })).rejects.toThrow(/cards and tasks/);
+    await expect(
+      service.importBoard(ada, { name: "X", cards: [{ name: "A", tasks: [task("Bad", { deadline: "02/11/2026" })] }] }),
+    ).rejects.toThrow(/date/);
+    await expect(
+      service.importBoard(ada, { name: "X", cards: [{ name: "A", tasks: Array.from({ length: 501 }, (_, i) => task(`T${i}`)) }] }),
+    ).rejects.toThrow(/up to 500 tasks/);
+    await expect(
+      service.importBoard(ada, { name: "X", cards: Array.from({ length: 41 }, (_, i) => ({ name: `C${i}`, tasks: [] })) }),
+    ).rejects.toThrow(/up to 40 cards/);
+    await expect(service.importBoard(sam, { name: "X", cards: [] })).rejects.toThrow(/Sign in/);
   });
 });

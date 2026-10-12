@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { MAX_CHECKLIST, MAX_LABELS } from "@/lib/domain";
 import { labelColor } from "@/lib/task-filters";
-import type { ChecklistItem, Dependency, Priority, Status } from "@/lib/types";
-import { PRIORITIES, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
+import type { ChecklistItem, Dependency, Priority, Repeat, Status } from "@/lib/types";
+import { PRIORITIES, PRIORITY_LABELS, REPEATS, REPEAT_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { Field, Modal, fieldClass, ghostBtn, primaryBtn } from "./Modal";
 import { TaskThread } from "./TaskThread";
 
@@ -65,6 +65,7 @@ export function DependencyDialog({
     notes: string;
     labels: string[];
     checklist: ChecklistItem[];
+    repeat: Repeat | null;
   }) => Promise<void>;
   onDelete?: () => Promise<void>;
 }) {
@@ -87,6 +88,7 @@ export function DependencyDialog({
   const [notes, setNotes] = useState(dependency?.notes ?? "");
   const [labels, setLabels] = useState<string[]>(dependency?.labels ?? []);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(dependency?.checklist ?? []);
+  const [repeat, setRepeat] = useState<Repeat | "">(dependency?.repeat ?? "");
   const [holdReason, setHoldReason] = useState(dependency?.holdReason ?? "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -115,6 +117,7 @@ export function DependencyDialog({
         notes,
         labels,
         checklist,
+        repeat: repeat || null,
       });
       onClose();
     } catch (err) {
@@ -187,6 +190,30 @@ export function DependencyDialog({
                 onChange={(event) => setDeadline(event.target.value)}
               />
             </Field>
+          </div>
+          <div>
+            <Field label="Repeat">
+              <select
+                className={fieldClass}
+                value={repeat}
+                onChange={(event) => setRepeat(event.target.value as Repeat | "")}
+                aria-describedby="repeat-hint"
+              >
+                <option value="">Does not repeat</option>
+                {REPEATS.map((item) => (
+                  <option key={item} value={item}>
+                    {REPEAT_LABELS[item]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <p id="repeat-hint" className="mt-1 text-xs text-white/45">
+              {repeat
+                ? deadline
+                  ? "When you finish it, a fresh copy is added with the next To date."
+                  : "Set a To date so the task knows when to repeat."
+                : "Repeating tasks need a To date."}
+            </p>
           </div>
           <Field label="Depends on">
             <select

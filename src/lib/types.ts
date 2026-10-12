@@ -20,6 +20,16 @@ export const PRIORITY_LABELS: Record<Priority, string> = {
   urgent: "Urgent",
 };
 
+export const REPEATS = ["daily", "weekly", "monthly"] as const;
+
+export type Repeat = (typeof REPEATS)[number];
+
+export const REPEAT_LABELS: Record<Repeat, string> = {
+  daily: "Every day",
+  weekly: "Every week",
+  monthly: "Every month",
+};
+
 export const CARD_COLORS = [
   "#0f6e6e",
   "#c4553a",
@@ -99,6 +109,8 @@ export type Dependency = {
   notes: string | null;
   labels: string[];
   checklist: ChecklistItem[];
+  /** When this task is finished, a copy with the next due date is added. */
+  repeat?: Repeat | null;
   commentCount?: number;
   /** Deadline and kind of the last reminder sent, e.g. "2026-10-12:due". */
   remindedFor?: string | null;

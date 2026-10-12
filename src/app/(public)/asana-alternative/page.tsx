@@ -9,6 +9,8 @@ const ROWS = [
   ["What a task is waiting on", "Depends on, waiting for, blocks, next action", "Task dependencies; check which plans include them"],
   ["My tasks across projects", "Yes, grouped by due date", "Yes"],
   ["Comments and activity", "Yes, on each task and board", "Yes"],
+  ["Calendar and recurring tasks", "Yes, on every board", "Yes"],
+  ["Moving your projects", "Import an Asana CSV export: sections, tasks, dates and tags", "Exports to CSV"],
   ["Gantt chart / timeline", "Included on every board, by task or by person", "Depends on your plan"],
   ["Portfolios, goals, forms, reporting", "None", "Yes, on some plans"],
   ["Integrations and automation", "None", "Many integrations and rules"],

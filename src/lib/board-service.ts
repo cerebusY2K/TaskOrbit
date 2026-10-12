@@ -1,20 +1,25 @@
 import { createHash, randomBytes, randomUUID } from "crypto";
 import {
+  addDaysISO,
   assertColor,
   assertDeadline,
   assertDependencyDraft,
   assertEmail,
   assertName,
+  daysBetween,
   defaultCardColor,
+  nextRepeatDate,
   normalizeEmail,
   todayISO,
+  type DependencyDraft,
 } from "./domain";
 import { BoardError } from "./errors";
+import { IMPORT_MAX_CARDS, IMPORT_MAX_TASKS } from "./importers";
 import type { Pusher } from "./push";
 import { boardTemplate, shiftISO } from "./templates";
 import type { Store } from "./store";
 import type { Board, BoardMember, Card, Dependency, PushDevice, SessionUser, TaskComment, UserProfile } from "./types";
-import { OWNER_ASSIGNEE, STATUS_LABELS } from "./types";
+import { CARD_COLORS, OWNER_ASSIGNEE, REPEAT_LABELS, STATUS_LABELS } from "./types";
 
 type Actor = SessionUser;
 
@@ -275,6 +280,91 @@ export class BoardService {
     return board;
   }
 
+  /** Creates a board from a Trello or CSV import that the browser has already turned into cards and tasks. */
+  async importBoard(actor: Actor, input: { name?: unknown; source?: unknown; cards?: unknown; done?: unknown }) {
+    const name = assertName(input.name, "Board name");
+    if (!Array.isArray(input.cards) || (input.done != null && !Array.isArray(input.done))) {
+      throw new BoardError("The import must list cards and tasks.");
+    }
+    if (input.cards.length > IMPORT_MAX_CARDS) throw new BoardError(`An import can have up to ${IMPORT_MAX_CARDS} cards.`);
+    const readTasks = (value: unknown) => {
+      if (value == null) return [];
+      if (!Array.isArray(value)) throw new BoardError("Each card must list its tasks.");
+      return value.map((task) => {
+        const item = (task ?? {}) as Record<string, unknown>;
+        return assertDependencyDraft(
+          {
+            name: item.name,
+            status: item.status,
+            holdReason: item.holdReason,
+            startDate: item.startDate,
+            deadline: item.deadline,
+            priority: item.priority,
+            labels: item.labels,
+            checklist: item.checklist,
+            notes: item.notes,
+          },
+          [],
+          null,
+        );
+      });
+    };
+    const cards = input.cards.map((raw) => {
+      const card = (raw ?? {}) as { name?: unknown; tasks?: unknown };
+      return { name: assertName(card.name, "Card name"), tasks: readTasks(card.tasks) };
+    });
+    const done = readTasks(input.done);
+    const total = done.length + cards.reduce((sum, card) => sum + card.tasks.length, 0);
+    if (total > IMPORT_MAX_TASKS) throw new BoardError(`An import can have up to ${IMPORT_MAX_TASKS} tasks.`);
+    const user = await this.store.getUser(actor.uid);
+    if (!user) throw new BoardError("Sign in required.", 401);
+    await this.ensureWorkspace(user);
+
+    const board = await this.createBoard(actor, { name, color: "#4c7dff" });
+    const doneCard = await this.doneCard(board);
+    const timestamp = now();
+    const tasks: Dependency[] = [];
+    const build = (draft: DependencyDraft, card: Card, fromCard: Card | null): Dependency => ({
+      id: id(),
+      ownerId: actor.uid,
+      cardId: draft.status === "done" ? doneCard.id : card.id,
+      linkId: id(),
+      ...draft,
+      holdReason: draft.status === "hold" ? draft.holdReason : null,
+      taskOwner: null,
+      assigneeMemberId: null,
+      doneFromCardId: draft.status === "done" ? (fromCard?.id ?? null) : null,
+      assignedByUid: actor.uid,
+      assignedByName: actor.name,
+      originCardName: draft.status === "done" ? doneCard.name : card.name,
+      deliveredTo: [],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+    for (const [index, item] of cards.entries()) {
+      const stamp = new Date(Date.parse(timestamp) + index).toISOString();
+      const card = await this.store.createCard({
+        id: id(),
+        ownerId: actor.uid,
+        boardId: board.id,
+        name: item.name,
+        color: CARD_COLORS[index % CARD_COLORS.length],
+        isSelf: false,
+        assigneeEmail: null,
+        createdAt: stamp,
+        updatedAt: stamp,
+      });
+      tasks.push(...item.tasks.map((draft) => build(draft, card, card)));
+    }
+    tasks.push(...done.map((draft) => build({ ...draft, status: "done" }, doneCard, null)));
+    for (let start = 0; start < tasks.length; start += 50) {
+      await Promise.all(tasks.slice(start, start + 50).map((task) => this.store.createDependency(task)));
+    }
+    const source = input.source === "Trello" ? "Trello" : "a CSV file";
+    await this.log(board, actor, null, `imported ${cards.length} card${cards.length === 1 ? "" : "s"} and ${total} task${total === 1 ? "" : "s"} from ${source}`);
+    return { boardId: board.id, cards: cards.length, tasks: total };
+  }
+
   async updateBoard(actor: Actor, boardId: string, input: { name?: unknown; color?: unknown }) {
     const board = await this.ownedBoard(actor, boardId);
     const patch: Partial<Board> = { updatedAt: now() };
@@ -373,6 +463,7 @@ export class BoardService {
       notes?: unknown;
       labels?: unknown;
       checklist?: unknown;
+      repeat?: unknown;
     },
   ) {
     if (typeof input.cardId !== "string" || !input.cardId) {
@@ -405,6 +496,7 @@ export class BoardService {
       notes: draft.notes,
       labels: draft.labels,
       checklist: draft.checklist,
+      repeat: draft.repeat,
       assignedByUid: actor.uid,
       assignedByName: actor.name,
       originCardName: card.name,
@@ -440,6 +532,7 @@ export class BoardService {
       notes?: unknown;
       labels?: unknown;
       checklist?: unknown;
+      repeat?: unknown;
     },
   ) {
     const { dependency, board } = await this.editableDependency(actor, dependencyId);
@@ -463,6 +556,7 @@ export class BoardService {
         notes: input.notes === undefined ? dependency.notes : input.notes,
         labels: input.labels === undefined ? dependency.labels : input.labels,
         checklist: input.checklist === undefined ? dependency.checklist : input.checklist,
+        repeat: input.repeat === undefined ? dependency.repeat : input.repeat,
       },
       siblings,
       dependency.id,
@@ -499,6 +593,7 @@ export class BoardService {
         notes: draft.notes,
         labels: draft.labels,
         checklist: draft.checklist,
+        repeat: draft.repeat,
         ...(isSource ? { dependantOnLabel: draft.dependantOnLabel } : {}),
         updatedAt: timestamp,
       });
@@ -516,6 +611,9 @@ export class BoardService {
           });
         }
       }
+    }
+    if (statusChanged && draft.status === "done") {
+      await this.repeatTask(actor, board, fillDependency(updated), dependency.cardId);
     }
     return placed;
   }
@@ -692,7 +790,10 @@ export class BoardService {
     }
     await this.relocate(dependency, card, patch);
     const board = await this.store.getBoard(card.boardId);
-    if (board) await this.log(board, actor, dependency.id, `moved "${dependency.name}" to ${card.name}`);
+    if (board) {
+      await this.log(board, actor, dependency.id, `moved "${dependency.name}" to ${card.name}`);
+      if (card.isDone && !source.isDone) await this.repeatTask(actor, board, fillDependency(dependency), source.id);
+    }
     return fillDependency((await this.store.getDependency(dependency.id)) ?? dependency);
   }
 
@@ -893,6 +994,42 @@ export class BoardService {
     return { dependency: fillDependency(dependency), board };
   }
 
+  /** Adds the next copy of a finished repeating task to `cardId`, and moves the repeat onto that copy. */
+  private async repeatTask(actor: Actor, board: Board, finished: Dependency, cardId: string) {
+    if (!finished.repeat || !finished.deadline) return null;
+    const card = await this.store.getCard(cardId);
+    if (!card || card.isDone) return null;
+    const deadline = nextRepeatDate(finished.deadline, finished.repeat, todayISO());
+    const span = finished.startDate ? daysBetween(finished.startDate, finished.deadline) : null;
+    const timestamp = now();
+    const next: Dependency = {
+      ...finished,
+      id: id(),
+      linkId: id(),
+      cardId: card.id,
+      startDate: span === null ? null : addDaysISO(deadline, -span),
+      deadline,
+      dependantOnId: null,
+      dependantOnLabel: finished.dependantOnId ? null : finished.dependantOnLabel,
+      status: "open",
+      holdReason: null,
+      doneFromCardId: null,
+      checklist: finished.checklist.map((item) => ({ ...item, id: id(), done: false })),
+      commentCount: 0,
+      remindedFor: null,
+      originCardName: card.name,
+      deliveredTo: [],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    await this.store.createDependency(next);
+    for (const copy of await this.store.listDependenciesByLink(finished.linkId)) {
+      await this.store.updateDependency(copy.id, { repeat: null });
+    }
+    await this.log(board, actor, next.id, `repeated "${next.name}", next due ${dayLabel(deadline)}`);
+    return next;
+  }
+
   private lastLogAt = 0;
 
   private async log(board: Board, actor: Actor, dependencyId: string | null, text: string) {
@@ -921,6 +1058,9 @@ export class BoardService {
     }
     if (after.deadline !== before.deadline) {
       lines.push(after.deadline ? `set ${quoted} due ${dayLabel(after.deadline)}` : `removed the due date from ${quoted}`);
+    }
+    if ((after.repeat ?? null) !== (before.repeat ?? null)) {
+      lines.push(after.repeat ? `set ${quoted} to repeat ${REPEAT_LABELS[after.repeat].toLowerCase()}` : `stopped repeating ${quoted}`);
     }
     const ticked = after.checklist.filter((item) => item.done && !before.checklist.find((old) => old.id === item.id)?.done);
     for (const item of ticked.slice(0, 3)) lines.push(`ticked "${item.text}" on ${quoted}`);
@@ -1006,6 +1146,7 @@ function fillDependency(item: Dependency): Dependency {
     labels: item.labels ?? [],
     checklist: item.checklist ?? [],
     commentCount: item.commentCount ?? 0,
+    repeat: item.repeat ?? null,
   };
 }
 
