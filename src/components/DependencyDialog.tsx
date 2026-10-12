@@ -6,6 +6,7 @@ import { labelColor } from "@/lib/task-filters";
 import type { ChecklistItem, Dependency, Priority, Status } from "@/lib/types";
 import { PRIORITIES, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { Field, Modal, fieldClass, ghostBtn, primaryBtn } from "./Modal";
+import { TaskThread } from "./TaskThread";
 
 type Assignee = { id: string; label: string };
 
@@ -28,6 +29,9 @@ export function DependencyDialog({
   focusHold = false,
   people,
   labelSuggestions = [],
+  currentUid,
+  isBoardOwner = false,
+  onThreadChanged,
   readOnly = false,
   onClose,
   onSubmit,
@@ -39,6 +43,9 @@ export function DependencyDialog({
   focusHold?: boolean;
   people: Assignee[];
   labelSuggestions?: string[];
+  currentUid?: string;
+  isBoardOwner?: boolean;
+  onThreadChanged?: () => Promise<void>;
   readOnly?: boolean;
   onClose: () => void;
   onSubmit: (input: {
@@ -278,6 +285,9 @@ export function DependencyDialog({
           </div>
         </div>
       </form>
+      {dependency && currentUid && onThreadChanged ? (
+        <TaskThread dependencyId={dependency.id} currentUid={currentUid} isBoardOwner={isBoardOwner} onChanged={onThreadChanged} />
+      ) : null}
     </Modal>
   );
 }

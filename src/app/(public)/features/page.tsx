@@ -39,6 +39,13 @@ export default function FeaturesPage() {
         priority, status, label or overdue. Filters apply to every view.
       </p>
 
+      <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Talk on the task</h2>
+      <p className="mt-3 text-sm leading-relaxed text-white/70">
+        Every task has comments. The person it is assigned to, whoever added it and anyone who already commented get a
+        notice when someone replies. Each task and each board also keeps an activity history: who added, renamed,
+        assigned, moved or finished what, and when.
+      </p>
+
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Three ways to see the same board</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-white/70">
         <li>

@@ -29,6 +29,7 @@ import { MemberSummary } from "./MemberSummary";
 import { MembersDialog } from "./MembersDialog";
 import { MyTasksPanel } from "./MyTasksPanel";
 import { ghostBtn } from "./Modal";
+import { BoardActivity } from "./BoardActivity";
 import { OrbitBackdrop } from "./OrbitBackdrop";
 import { PushToggle } from "./PushToggle";
 import { toRgb } from "./orbit-math";
@@ -90,6 +91,7 @@ export function BoardScreen({
   } | null>(null);
   const [membersOpen, setMembersOpen] = useState(false);
   const [myTasksOpen, setMyTasksOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
   const [filter, setFilter] = useState<TaskFilter>(EMPTY_FILTER);
   const [view, setViewState] = useState<BoardView>(savedView);
   const setView = (next: BoardView) => {
@@ -396,6 +398,15 @@ export function BoardScreen({
             onClick={() => setBoardDialog(active)}
           >
             Edit board
+          </button>
+        ) : null}
+        {active ? (
+          <button
+            type="button"
+            className="shrink-0 rounded-full px-3 py-1.5 text-sm text-white/55 transition hover:bg-white/10 hover:text-white"
+            onClick={() => setActivityOpen(true)}
+          >
+            Activity
           </button>
         ) : null}
         <div role="group" aria-label="View" className="ml-auto flex shrink-0 rounded-full bg-white/5 p-0.5">
@@ -714,6 +725,17 @@ export function BoardScreen({
                               ) : null}
                             </div>
                           ) : null}
+                          {dependency.commentCount ? (
+                            <button
+                              type="button"
+                              className="ml-6 mt-1 inline-flex items-center gap-1 text-[11px] text-white/55 hover:text-white"
+                              aria-label={`${dependency.commentCount} comment${dependency.commentCount === 1 ? "" : "s"} on ${dependency.name}`}
+                              onClick={() => setDependencyDialog({ card, dependency, readOnly: !editable })}
+                            >
+                              <CommentIcon />
+                              {dependency.commentCount}
+                            </button>
+                          ) : null}
                           <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 pl-6 text-xs text-white/55">
                             {overdue ? (
                               <span className="font-semibold text-clay">Overdue · {formatDay(dependency.deadline!)}</span>
@@ -861,6 +883,9 @@ export function BoardScreen({
           readOnly={dependencyDialog.readOnly}
           people={people}
           labelSuggestions={labelsInUse}
+          currentUid={uid}
+          isBoardOwner={isOwner}
+          onThreadChanged={onReload}
           siblings={board.dependencies.filter((item) => item.cardId === dependencyDialog.card.id)}
           onClose={() => setDependencyDialog(null)}
           onSubmit={async (input) => {
@@ -908,6 +933,22 @@ export function BoardScreen({
             setActiveBoardId(null);
             setToast(`You left ${active.name}.`);
             await onReload();
+          }}
+        />
+      ) : null}
+
+      {activityOpen && active ? (
+        <BoardActivity
+          boardId={active.id}
+          boardName={active.name}
+          currentUid={uid}
+          onClose={() => setActivityOpen(false)}
+          onOpenTask={(dependencyId) => {
+            const task = board.dependencies.find((item) => item.id === dependencyId);
+            if (!task) return false;
+            setActivityOpen(false);
+            openTask(task);
+            return true;
           }}
         />
       ) : null}
@@ -1009,6 +1050,19 @@ function ChecklistBadge({ done, total }: { done: number; total: number }) {
       </svg>
       {done}/{total}
     </span>
+  );
+}
+
+function CommentIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path
+        d="M2 2.5h8a.5.5 0 01.5.5v5a.5.5 0 01-.5.5H5L2.8 10.2V8.5H2a.5.5 0 01-.5-.5V3a.5.5 0 01.5-.5z"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

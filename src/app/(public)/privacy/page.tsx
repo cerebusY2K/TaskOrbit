@@ -33,7 +33,13 @@ export default function PrivacyPage() {
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Everything you put on a board is stored: board and card names and colours, and for each task the name, owner,
         priority, status, from and to dates, what it depends on, what it is waiting for, what it blocks, the next
-        action, notes, a reason when it is on hold, and the times it was created and last changed.
+        action, notes, labels, checklist items, a reason when it is on hold, and the times it was created and last
+        changed.
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-white/70">
+        Comments on a task are stored with the author&apos;s name and the time. Each board also keeps an activity
+        history: who added, changed, moved or deleted a task, or joined or left the board, and when. Everyone on the
+        board can see its comments and activity.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         When you add someone to a board, we store the name and email address you typed, even if they have not signed
@@ -56,8 +62,8 @@ export default function PrivacyPage() {
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Notices and push notifications</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         The app stores in-app notices: a title, a short message, whether you have read it, when it was created, and
-        the task it refers to when there is one. Typical notices are a task assigned to you, someone joining or
-        leaving a board, and tasks moved onto you when two members are merged.
+        the task it refers to when there is one. Typical notices are a task assigned to you, a new comment on a task
+        you are part of, someone joining or leaving a board, and tasks moved onto you when two members are merged.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Push is off until you turn it on. If you do, we store a push subscription for that device. In the browser
@@ -135,7 +141,8 @@ export default function PrivacyPage() {
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">How long it is kept</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Board data stays until you delete it or until the account is removed. You can delete cards and tasks, and you
-        can delete a board as long as you keep one. Removing a member deletes that membership. There is no button in
+        can delete a board as long as you keep one. Deleting a task deletes its comments, and deleting a board deletes
+        its activity history. The author of a comment and the board owner can delete it. Removing a member deletes that membership. There is no button in
         the app that deletes your whole account. Email <ContactLink /> to ask for that, and for a copy of
         the account data we hold. The sign-in cookie expires after 14 days. The visitor cookie expires after about
         400 days. Daily visit totals are kept so the operator can see them.

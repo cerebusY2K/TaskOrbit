@@ -99,12 +99,35 @@ export type Dependency = {
   notes: string | null;
   labels: string[];
   checklist: ChecklistItem[];
+  commentCount?: number;
+  /** Deadline and kind of the last reminder sent, e.g. "2026-10-12:due". */
+  remindedFor?: string | null;
   assignedByUid: string;
   assignedByName: string;
   originCardName: string;
   deliveredTo: string[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type TaskComment = {
+  id: string;
+  dependencyId: string;
+  boardId: string;
+  authorUid: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+};
+
+export type ActivityEntry = {
+  id: string;
+  boardId: string;
+  dependencyId: string | null;
+  actorUid: string;
+  actorName: string;
+  text: string;
+  createdAt: string;
 };
 
 export type AppNotification = {

@@ -8,6 +8,7 @@ const ROWS = [
   ["Projects and tasks", "Boards, cards, then tasks", "Projects, sections, tasks and subtasks"],
   ["What a task is waiting on", "Depends on, waiting for, blocks, next action", "Task dependencies; check which plans include them"],
   ["My tasks across projects", "Yes, grouped by due date", "Yes"],
+  ["Comments and activity", "Yes, on each task and board", "Yes"],
   ["Gantt chart / timeline", "Included on every board, by task or by person", "Depends on your plan"],
   ["Portfolios, goals, forms, reporting", "None", "Yes, on some plans"],
   ["Integrations and automation", "None", "Many integrations and rules"],
@@ -73,14 +74,14 @@ export default function AsanaAlternativePage() {
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Sharing is one invite link per board. People sign in with Google, join the board, and edit the tasks they added or that are assigned to them.
-        Assignments show up as notices in the app, and as push notifications if they turn those on.
+        Each task has comments and a history of who changed what. Assignments and replies show up as notices in the app, and as push notifications if they turn those on.
       </p>
 
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">When Asana is the better choice</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-white/70">
         <li>You manage many projects across departments and need portfolios, goals or workload reporting.</li>
         <li>You need intake forms, approvals, rules or integrations with the rest of your tools.</li>
-        <li>You need nested subtasks, comments and attachments on tasks.</li>
+        <li>You need nested subtasks and file attachments on tasks.</li>
         <li>Your team needs admin controls and sign-in other than Google.</li>
       </ul>
       <p className="mt-3 text-sm leading-relaxed text-white/70">

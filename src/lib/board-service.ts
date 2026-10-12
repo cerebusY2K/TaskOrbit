@@ -13,8 +13,8 @@ import { BoardError } from "./errors";
 import type { Pusher } from "./push";
 import { boardTemplate, shiftISO } from "./templates";
 import type { Store } from "./store";
-import type { Board, BoardMember, Card, Dependency, PushDevice, SessionUser, UserProfile } from "./types";
-import { OWNER_ASSIGNEE } from "./types";
+import type { Board, BoardMember, Card, Dependency, PushDevice, SessionUser, TaskComment, UserProfile } from "./types";
+import { OWNER_ASSIGNEE, STATUS_LABELS } from "./types";
 
 type Actor = SessionUser;
 
@@ -197,6 +197,7 @@ export class BoardService {
       members.map((member) => (member.uid === actor.uid ? { ...member, uid: null, joinedAt: null } : member)),
     );
     await this.notify(board.ownerId, `${actor.name} left ${board.name}`, `${actor.name} (${actor.email}) left the board.`);
+    await this.log(board, actor, null, "left the board");
   }
 
   async createBoard(actor: Actor, input: { name?: unknown; color?: unknown }) {
@@ -298,6 +299,7 @@ export class BoardService {
       for (const dependency of dependencies) await this.deleteOwnedDependency(actor, dependency);
       await this.store.deleteCard(card.id);
     }
+    await this.store.deleteActivityForBoard(board.id);
     await this.store.deleteBoard(board.id);
   }
 
@@ -411,6 +413,7 @@ export class BoardService {
       updatedAt: timestamp,
     };
     await this.store.createDependency(dependency);
+    await this.log(board, actor, dependency.id, `added "${dependency.name}" to ${card.name}`);
     await this.notifyAssignee(actor, board, dependency, null);
     if (dependency.status === "done") await this.placeForStatus(dependency);
     const saved = (await this.store.getDependency(dependency.id)) ?? dependency;
@@ -475,6 +478,7 @@ export class BoardService {
       updatedAt: timestamp,
     });
     await this.notifyAssignee(actor, board, updated, dependency.assigneeMemberId ?? null);
+    await this.logChanges(actor, board, dependency, fillDependency(updated));
     const statusChanged = draft.status !== dependency.status;
     const placed = statusChanged ? await this.placeForStatus(updated) : updated;
     const linked = await this.store.listDependenciesByLink(dependency.linkId);
@@ -519,11 +523,105 @@ export class BoardService {
   async deleteDependency(actor: Actor, dependencyId: string) {
     const dependency = await this.store.getDependency(dependencyId);
     if (dependency && dependency.ownerId !== actor.uid && dependency.assignedByUid === actor.uid) {
-      await this.cardAccess(actor, dependency.cardId);
+      const { board } = await this.cardAccess(actor, dependency.cardId);
       await this.store.deleteDependency(dependency.id);
+      await this.store.deleteCommentsForDependency(dependency.id);
+      await this.log(board, actor, null, `deleted "${dependency.name}"`);
       return;
     }
-    await this.deleteOwnedDependency(actor, await this.ownedDependency(actor, dependencyId));
+    const owned = await this.ownedDependency(actor, dependencyId);
+    const card = await this.store.getCard(owned.cardId);
+    const board = card ? await this.store.getBoard(card.boardId) : null;
+    await this.deleteOwnedDependency(actor, owned);
+    if (board) await this.log(board, actor, null, `deleted "${owned.name}"`);
+  }
+
+  async taskThread(actor: Actor, dependencyId: string) {
+    const { dependency } = await this.readableDependency(actor, dependencyId);
+    const [comments, activity] = await Promise.all([
+      this.store.listComments(dependency.id),
+      this.store.listActivityByDependency(dependency.id),
+    ]);
+    return { comments, activity: activity.slice(0, 50) };
+  }
+
+  async addComment(actor: Actor, dependencyId: string, body: unknown) {
+    const text = assertName(body, "Comment", 2000);
+    const { dependency, board } = await this.readableDependency(actor, dependencyId);
+    const earlier = await this.store.listComments(dependency.id);
+    const comment: TaskComment = {
+      id: id(),
+      dependencyId: dependency.id,
+      boardId: board.id,
+      authorUid: actor.uid,
+      authorName: actor.name,
+      body: text,
+      createdAt: now(),
+    };
+    await this.store.createComment(comment);
+    await this.store.updateDependency(dependency.id, { commentCount: earlier.length + 1 });
+    await this.log(board, actor, dependency.id, `commented on "${dependency.name}"`);
+    const canSee = new Set([board.ownerId, ...(board.members ?? []).map((member) => member.uid).filter(Boolean)]);
+    const recipients = new Set(
+      [this.assigneeUid(board, dependency), dependency.assignedByUid, ...earlier.map((item) => item.authorUid)].filter(
+        (uid): uid is string => Boolean(uid) && uid !== actor.uid && canSee.has(uid),
+      ),
+    );
+    const snippet = text.length > 140 ? `${text.slice(0, 137)}…` : text;
+    for (const uid of recipients) {
+      await this.notify(uid, `${actor.name} commented on "${dependency.name}"`, snippet, dependency.id);
+    }
+    return comment;
+  }
+
+  async deleteComment(actor: Actor, commentId: string) {
+    const comment = await this.store.getComment(commentId);
+    if (!comment) throw new BoardError("Comment not found.", 404);
+    const { dependency, board } = await this.readableDependency(actor, comment.dependencyId).catch(() => {
+      throw new BoardError("Comment not found.", 404);
+    });
+    if (comment.authorUid !== actor.uid && board.ownerId !== actor.uid) {
+      throw new BoardError("Only the author or the board owner can delete a comment.", 403);
+    }
+    await this.store.deleteComment(comment.id);
+    await this.store.updateDependency(dependency.id, { commentCount: Math.max(0, (dependency.commentCount ?? 1) - 1) });
+  }
+
+  async boardActivity(actor: Actor, boardId: string) {
+    const board = await this.store.getBoard(boardId);
+    const allowed = board && (board.ownerId === actor.uid || (board.members ?? []).some((member) => member.uid === actor.uid));
+    if (!board || !allowed) throw new BoardError("Board not found.", 404);
+    return this.store.listActivityByBoard(board.id, 80);
+  }
+
+  /** Sends one "due today" and one "overdue" notice per task, to its assignee or else the board owner. */
+  async sendReminders(today: string) {
+    const day = assertDeadline(today, "Today");
+    if (!day) throw new BoardError("Today must be a date.");
+    const yesterday = shiftISO(day, -1);
+    const tasks = await this.store.listDependenciesDue([day, yesterday]);
+    const handled = new Set<string>();
+    let sent = 0;
+    for (const task of tasks) {
+      if (task.status === "done" || !task.deadline || handled.has(task.linkId)) continue;
+      const kind = task.deadline === day ? "due" : "overdue";
+      const key = `${task.deadline}:${kind}`;
+      if (task.remindedFor === key) continue;
+      handled.add(task.linkId);
+      const card = await this.store.getCard(task.cardId);
+      const board = card ? await this.store.getBoard(card.boardId) : null;
+      if (!card || !board || card.isDone) continue;
+      const uid = this.assigneeUid(board, task) ?? board.ownerId;
+      await this.notify(
+        uid,
+        kind === "due" ? `Due today: ${task.name}` : `Overdue: ${task.name}`,
+        kind === "due" ? `On ${board.name} · ${card.name}.` : `It was due yesterday on ${board.name} · ${card.name}.`,
+        task.id,
+      );
+      for (const copy of tasks) if (copy.linkId === task.linkId) await this.store.updateDependency(copy.id, { remindedFor: key });
+      sent += 1;
+    }
+    return { checked: tasks.length, sent };
   }
 
   async previewInvite(token: string) {
@@ -564,6 +662,7 @@ export class BoardService {
       ? members.map((member) => (member.id === match.id ? { ...member, uid: actor.uid, joinedAt: timestamp } : member))
       : [...members, { id: id(), name: actor.name, email, uid: actor.uid, addedAt: timestamp, joinedAt: timestamp }];
     await this.saveMembers(board, next);
+    await this.log(board, actor, null, "joined the board");
     await this.notify(actor.uid, `You joined ${board.name}`, `${fromName} shared the ${board.name} board with you.`);
     const waiting = next.filter((member) => !member.uid);
     await this.notify(
@@ -592,6 +691,8 @@ export class BoardService {
       Object.assign(patch, { doneFromCardId: null, ...(dependency.status === "done" ? { status: "open" } : {}) });
     }
     await this.relocate(dependency, card, patch);
+    const board = await this.store.getBoard(card.boardId);
+    if (board) await this.log(board, actor, dependency.id, `moved "${dependency.name}" to ${card.name}`);
     return fillDependency((await this.store.getDependency(dependency.id)) ?? dependency);
   }
 
@@ -772,12 +873,58 @@ export class BoardService {
 
   private async notifyAssignee(actor: Actor, board: Board, task: Dependency, previous: string | null) {
     if (!task.assigneeMemberId || task.assigneeMemberId === previous) return;
-    const uid =
-      task.assigneeMemberId === OWNER_ASSIGNEE
-        ? board.ownerId
-        : (board.members ?? []).find((member) => member.id === task.assigneeMemberId)?.uid;
+    const uid = this.assigneeUid(board, task);
     if (!uid || uid === actor.uid) return;
     await this.notify(uid, "New task for you", `${actor.name} assigned you "${task.name}" on ${board.name}.`, task.id);
+  }
+
+  private assigneeUid(board: Board, task: Dependency) {
+    if (!task.assigneeMemberId) return null;
+    if (task.assigneeMemberId === OWNER_ASSIGNEE) return board.ownerId;
+    return (board.members ?? []).find((member) => member.id === task.assigneeMemberId)?.uid ?? null;
+  }
+
+  private async readableDependency(actor: Actor, dependencyId: string) {
+    const dependency = await this.store.getDependency(dependencyId);
+    if (!dependency) throw new BoardError("Dependency not found.", 404);
+    const { board } = await this.cardAccess(actor, dependency.cardId).catch(() => {
+      throw new BoardError("Dependency not found.", 404);
+    });
+    return { dependency: fillDependency(dependency), board };
+  }
+
+  private lastLogAt = 0;
+
+  private async log(board: Board, actor: Actor, dependencyId: string | null, text: string) {
+    // Stores sort activity by time only, so entries written in one burst need distinct timestamps.
+    this.lastLogAt = Math.max(Date.now(), this.lastLogAt + 1);
+    await this.store.createActivity({
+      id: id(),
+      boardId: board.id,
+      dependencyId,
+      actorUid: actor.uid,
+      actorName: actor.name,
+      text,
+      createdAt: new Date(this.lastLogAt).toISOString(),
+    });
+  }
+
+  private async logChanges(actor: Actor, board: Board, before: Dependency, after: Dependency) {
+    const quoted = `"${after.name}"`;
+    const lines: string[] = [];
+    if (after.name !== before.name) lines.push(`renamed "${before.name}" to ${quoted}`);
+    if (after.status !== before.status) {
+      lines.push(after.status === "hold" ? `put ${quoted} on hold: ${after.holdReason}` : `marked ${quoted} ${STATUS_LABELS[after.status]}`);
+    }
+    if (after.taskOwner !== before.taskOwner) {
+      lines.push(after.taskOwner ? `assigned ${quoted} to ${after.taskOwner}` : `unassigned ${quoted}`);
+    }
+    if (after.deadline !== before.deadline) {
+      lines.push(after.deadline ? `set ${quoted} due ${dayLabel(after.deadline)}` : `removed the due date from ${quoted}`);
+    }
+    const ticked = after.checklist.filter((item) => item.done && !before.checklist.find((old) => old.id === item.id)?.done);
+    for (const item of ticked.slice(0, 3)) lines.push(`ticked "${item.text}" on ${quoted}`);
+    for (const text of lines) await this.log(board, actor, after.id, text);
   }
 
   private async boardTasks(boardId: string) {
@@ -809,10 +956,14 @@ export class BoardService {
     const linked = await this.store.listDependenciesByLink(dependency.linkId);
     const isSource = dependency.assignedByUid === actor.uid && dependency.ownerId === actor.uid;
     if (isSource) {
-      for (const item of linked) await this.store.deleteDependency(item.id);
+      for (const item of linked) {
+        await this.store.deleteDependency(item.id);
+        await this.store.deleteCommentsForDependency(item.id);
+      }
       return;
     }
     await this.store.deleteDependency(dependency.id);
+    await this.store.deleteCommentsForDependency(dependency.id);
   }
 
   private publicInvite(invite: { token: string }, origin?: string) {
@@ -854,6 +1005,14 @@ function fillDependency(item: Dependency): Dependency {
     notes: item.notes ?? null,
     labels: item.labels ?? [],
     checklist: item.checklist ?? [],
+    commentCount: item.commentCount ?? 0,
   };
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function dayLabel(iso: string) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return `${day} ${MONTHS[month - 1]} ${year}`;
 }
 

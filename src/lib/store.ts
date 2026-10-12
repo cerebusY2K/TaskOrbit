@@ -1,4 +1,5 @@
 import type {
+  ActivityEntry,
   AppNotification,
   Board,
   Card,
@@ -7,6 +8,7 @@ import type {
   OutboxMessage,
   PendingAssignment,
   PushDevice,
+  TaskComment,
   UserProfile,
 } from "./types";
 
@@ -36,6 +38,19 @@ export interface Store {
   createDependency(dependency: Dependency): Promise<Dependency>;
   updateDependency(id: string, patch: Partial<Dependency>): Promise<Dependency>;
   deleteDependency(id: string): Promise<void>;
+  /** Open or done tasks whose deadline is one of these days. */
+  listDependenciesDue(days: string[]): Promise<Dependency[]>;
+
+  listComments(dependencyId: string): Promise<TaskComment[]>;
+  getComment(id: string): Promise<TaskComment | null>;
+  createComment(comment: TaskComment): Promise<TaskComment>;
+  deleteComment(id: string): Promise<void>;
+  deleteCommentsForDependency(dependencyId: string): Promise<void>;
+
+  createActivity(entry: ActivityEntry): Promise<ActivityEntry>;
+  listActivityByDependency(dependencyId: string): Promise<ActivityEntry[]>;
+  listActivityByBoard(boardId: string, limit: number): Promise<ActivityEntry[]>;
+  deleteActivityForBoard(boardId: string): Promise<void>;
 
   listNotifications(userId: string): Promise<AppNotification[]>;
   createNotification(notification: AppNotification): Promise<AppNotification>;
@@ -68,6 +83,8 @@ export type StoreSnapshot = {
   invites: InviteRecord[];
   outbox: OutboxMessage[];
   pushDevices?: PushDevice[];
+  comments?: TaskComment[];
+  activity?: ActivityEntry[];
 };
 
 export class MemoryStore implements Store {
@@ -80,6 +97,8 @@ export class MemoryStore implements Store {
   invites: InviteRecord[] = [];
   outbox: OutboxMessage[] = [];
   pushDevices = new Map<string, PushDevice>();
+  comments = new Map<string, TaskComment>();
+  activity = new Map<string, ActivityEntry>();
   onChange?: () => void;
 
   private touch() {
@@ -96,6 +115,8 @@ export class MemoryStore implements Store {
     this.invites = snapshot.invites;
     this.outbox = snapshot.outbox;
     this.pushDevices = new Map((snapshot.pushDevices ?? []).map((item) => [item.id, item]));
+    this.comments = new Map((snapshot.comments ?? []).map((item) => [item.id, item]));
+    this.activity = new Map((snapshot.activity ?? []).map((item) => [item.id, item]));
   }
 
   dump(): StoreSnapshot {
@@ -109,6 +130,8 @@ export class MemoryStore implements Store {
       invites: this.invites,
       outbox: this.outbox,
       pushDevices: [...this.pushDevices.values()],
+      comments: [...this.comments.values()],
+      activity: [...this.activity.values()],
     };
   }
 
@@ -245,6 +268,62 @@ export class MemoryStore implements Store {
   async deleteDependency(id: string) {
     this.dependencies.delete(id);
     this.touch();
+  }
+
+  async listDependenciesDue(days: string[]) {
+    return [...this.dependencies.values()].filter((item) => item.deadline !== null && days.includes(item.deadline));
+  }
+
+  async listComments(dependencyId: string) {
+    return [...this.comments.values()]
+      .filter((item) => item.dependencyId === dependencyId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  async getComment(id: string) {
+    return this.comments.get(id) ?? null;
+  }
+
+  async createComment(comment: TaskComment) {
+    this.comments.set(comment.id, comment);
+    this.touch();
+    return comment;
+  }
+
+  async deleteComment(id: string) {
+    this.comments.delete(id);
+    this.touch();
+  }
+
+  async deleteCommentsForDependency(dependencyId: string) {
+    for (const item of this.comments.values()) if (item.dependencyId === dependencyId) this.comments.delete(item.id);
+    this.touch();
+  }
+
+  async deleteActivityForBoard(boardId: string) {
+    for (const item of this.activity.values()) if (item.boardId === boardId) this.activity.delete(item.id);
+    this.touch();
+  }
+
+  async createActivity(entry: ActivityEntry) {
+    this.activity.set(entry.id, entry);
+    this.touch();
+    return entry;
+  }
+
+  async listActivityByDependency(dependencyId: string) {
+    return [...this.activity.values()]
+      .reverse()
+      .filter((item) => item.dependencyId === dependencyId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async listActivityByBoard(boardId: string, limit: number) {
+    return [...this.activity.values()]
+      .reverse()
+      .filter((item) => item.boardId === boardId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, limit);
   }
 
   async listNotifications(userId: string) {

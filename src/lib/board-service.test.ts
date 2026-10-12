@@ -463,3 +463,123 @@ describe("board", () => {
     expect(loaded.boards).toHaveLength(DEFAULT_BOARDS.length);
   });
 });
+
+describe("comments, activity and reminders", () => {
+  const lee: SessionUser = { uid: "lee", email: "lee@example.com", name: "Lee", photoURL: null };
+
+  async function sharedBoard() {
+    const { service, store } = setup();
+    await service.signIn(ada);
+    await service.signIn(sam);
+    await service.signIn(lee);
+    const work = (await service.board(ada)).boards[0]!;
+    const samMember = await service.addMember(ada, work.id, { name: "Sam", email: "sam@example.com" });
+    await service.acceptInvite(sam, (await service.boardInvite(ada, work.id)).token);
+    const me = (await service.board(ada)).cards.find((card) => card.isSelf && card.boardId === work.id)!;
+    return { service, store, work, me, samMember };
+  }
+
+  const titles = async (service: BoardService, user: SessionUser) =>
+    (await service.board(user)).notifications.map((item) => item.title);
+
+  it("notifies the people on a task when someone comments", async () => {
+    const { service, me, samMember } = await sharedBoard();
+    const { dependency } = await service.createDependency(ada, {
+      cardId: me.id,
+      name: "Ship",
+      status: "open",
+      assigneeMemberId: samMember.id,
+    });
+
+    await service.addComment(sam, dependency.id, "  Started on this  ");
+    expect(await titles(service, ada)).toContain('Sam commented on "Ship"');
+    expect(await titles(service, sam)).not.toContain('Sam commented on "Ship"');
+
+    await service.addComment(ada, dependency.id, "Thanks");
+    expect(await titles(service, sam)).toContain('Ada commented on "Ship"');
+
+    const thread = await service.taskThread(sam, dependency.id);
+    expect(thread.comments.map((item) => item.body)).toEqual(["Started on this", "Thanks"]);
+    expect(thread.activity[0]?.text).toBe('commented on "Ship"');
+    expect((await service.board(ada)).dependencies.find((item) => item.id === dependency.id)?.commentCount).toBe(2);
+
+    await expect(service.addComment(ada, dependency.id, "   ")).rejects.toThrow(/Comment/);
+    await expect(service.addComment(lee, dependency.id, "Hi")).rejects.toThrow(/not found/i);
+    await expect(service.taskThread(lee, dependency.id)).rejects.toThrow(/not found/i);
+  });
+
+  it("lets only the author or the board owner delete a comment", async () => {
+    const { service, me } = await sharedBoard();
+    const { dependency } = await service.createDependency(ada, { cardId: me.id, name: "Ship", status: "open" });
+    const fromAda = await service.addComment(ada, dependency.id, "Owner note");
+    const fromSam = await service.addComment(sam, dependency.id, "Member note");
+
+    await expect(service.deleteComment(sam, fromAda.id)).rejects.toThrow(/author or the board owner/);
+    await service.deleteComment(sam, fromSam.id);
+    await service.addComment(sam, dependency.id, "Again");
+    const again = (await service.taskThread(ada, dependency.id)).comments.find((item) => item.body === "Again")!;
+    await service.deleteComment(ada, again.id);
+
+    const thread = await service.taskThread(ada, dependency.id);
+    expect(thread.comments.map((item) => item.body)).toEqual(["Owner note"]);
+    expect((await service.board(ada)).dependencies.find((item) => item.id === dependency.id)?.commentCount).toBe(1);
+    await expect(service.deleteComment(ada, "missing")).rejects.toThrow(/not found/);
+  });
+
+  it("logs task changes to the board activity, newest first", async () => {
+    const { service, store, work, me, samMember } = await sharedBoard();
+    const { dependency } = await service.createDependency(ada, { cardId: me.id, name: "Ship", status: "open" });
+    await service.updateDependency(ada, dependency.id, {
+      name: "Ship v2",
+      status: "wip",
+      deadline: "2026-11-03",
+      assigneeMemberId: samMember.id,
+    });
+    await service.deleteDependency(ada, dependency.id);
+
+    const activity = await service.boardActivity(sam, work.id);
+    const texts = activity.map((entry) => entry.text);
+    expect(texts).toEqual([
+      'deleted "Ship v2"',
+      'set "Ship v2" due 3 Nov 2026',
+      'assigned "Ship v2" to Sam',
+      'marked "Ship v2" In Progress',
+      'renamed "Ship" to "Ship v2"',
+      'added "Ship" to Me',
+      "joined the board",
+    ]);
+    expect(activity.find((entry) => entry.text === "joined the board")?.actorName).toBe("Sam");
+    await expect(service.boardActivity(lee, work.id)).rejects.toThrow(/not found/i);
+
+    await service.deleteBoard(ada, work.id);
+    expect(await store.listActivityByBoard(work.id, 10)).toHaveLength(0);
+  });
+
+  it("sends each due-date reminder once, to the assignee or else the board owner", async () => {
+    const { service, me, samMember } = await sharedBoard();
+    const forSam = await service.createDependency(ada, {
+      cardId: me.id,
+      name: "Sam's deadline",
+      status: "open",
+      deadline: "2026-11-03",
+      assigneeMemberId: samMember.id,
+    });
+    await service.createDependency(ada, { cardId: me.id, name: "Ada's deadline", status: "wip", deadline: "2026-11-02" });
+    await service.createDependency(ada, { cardId: me.id, name: "Finished", status: "done", deadline: "2026-11-03" });
+    await service.createDependency(ada, { cardId: me.id, name: "Later", status: "open", deadline: "2026-11-09" });
+
+    expect(await service.sendReminders("2026-11-03")).toMatchObject({ sent: 2 });
+    expect(await titles(service, sam)).toContain("Due today: Sam's deadline");
+    expect(await titles(service, ada)).toContain("Overdue: Ada's deadline");
+    expect((await titles(service, ada)).some((title) => title.includes("Finished") || title.includes("Later"))).toBe(false);
+
+    expect(await service.sendReminders("2026-11-03")).toMatchObject({ sent: 0 });
+
+    expect(await service.sendReminders("2026-11-04")).toMatchObject({ sent: 1 });
+    expect(await titles(service, sam)).toContain("Overdue: Sam's deadline");
+    expect((await service.board(ada)).dependencies.find((item) => item.id === forSam.dependency.id)?.remindedFor).toBe(
+      "2026-11-03:overdue",
+    );
+    await expect(service.sendReminders("tomorrow")).rejects.toThrow();
+  });
+});

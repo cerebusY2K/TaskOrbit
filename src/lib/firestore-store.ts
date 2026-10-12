@@ -5,6 +5,7 @@ import { readFileSync } from "fs";
 import { BoardError } from "./errors";
 import type { Store } from "./store";
 import type {
+  ActivityEntry,
   AppNotification,
   Board,
   Card,
@@ -13,6 +14,7 @@ import type {
   OutboxMessage,
   PendingAssignment,
   PushDevice,
+  TaskComment,
   UserProfile,
 } from "./types";
 
@@ -241,6 +243,70 @@ export class FirestoreStore implements Store {
 
   async deleteDependency(id: string) {
     await this.collection("dependencies").doc(id).delete();
+  }
+
+  async listDependenciesDue(days: string[]) {
+    if (!days.length) return [];
+    const snap = await this.collection("dependencies").where("deadline", "in", days.slice(0, 10)).get();
+    return snap.docs.map((doc) => doc.data() as Dependency);
+  }
+
+  async listComments(dependencyId: string) {
+    const snap = await this.collection("comments").where("dependencyId", "==", dependencyId).get();
+    return snap.docs
+      .map((doc) => doc.data() as TaskComment)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  async getComment(id: string) {
+    const snap = await this.collection("comments").doc(id).get();
+    return snap.exists ? (snap.data() as TaskComment) : null;
+  }
+
+  async createComment(comment: TaskComment) {
+    await this.collection("comments").doc(comment.id).set(comment);
+    return comment;
+  }
+
+  async deleteComment(id: string) {
+    await this.collection("comments").doc(id).delete();
+  }
+
+  async deleteCommentsForDependency(dependencyId: string) {
+    const snap = await this.collection("comments").where("dependencyId", "==", dependencyId).get();
+    if (snap.empty) return;
+    const batch = db().batch();
+    snap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+  }
+
+  async deleteActivityForBoard(boardId: string) {
+    const snap = await this.collection("activity").where("boardId", "==", boardId).get();
+    for (let start = 0; start < snap.docs.length; start += 400) {
+      const batch = db().batch();
+      snap.docs.slice(start, start + 400).forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+    }
+  }
+
+  async createActivity(entry: ActivityEntry) {
+    await this.collection("activity").doc(entry.id).set(entry);
+    return entry;
+  }
+
+  async listActivityByDependency(dependencyId: string) {
+    const snap = await this.collection("activity").where("dependencyId", "==", dependencyId).get();
+    return snap.docs
+      .map((doc) => doc.data() as ActivityEntry)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async listActivityByBoard(boardId: string, limit: number) {
+    const snap = await this.collection("activity").where("boardId", "==", boardId).get();
+    return snap.docs
+      .map((doc) => doc.data() as ActivityEntry)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, limit);
   }
 
   async listNotifications(userId: string) {

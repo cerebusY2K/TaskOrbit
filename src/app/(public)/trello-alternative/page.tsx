@@ -10,7 +10,8 @@ const ROWS = [
   ["Labels, checklists and search", "Yes, plus a My tasks list across boards", "Yes"],
   ["Gantt chart / timeline", "Included on every board, by task or by person", "Depends on your plan"],
   ["Integrations and automation", "None", "Many Power-Ups and built-in automation"],
-  ["Attachments and comments", "Not yet: notes on the task", "Yes"],
+  ["Comments and activity", "Yes: comments and a history on each task and board", "Yes"],
+  ["Attachments", "Not yet: notes on the task", "Yes"],
   ["Sign-in", "Google only", "Email, Google and others"],
   ["Price", "Free, no paid plan", "Free plan and paid plans"],
 ] as const;
@@ -80,7 +81,7 @@ export default function TrelloAlternativePage() {
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">When Trello is the better choice</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-white/70">
         <li>You rely on integrations with other apps, or on rules that move cards automatically.</li>
-        <li>You need attachments and comments on each card.</li>
+        <li>You need file attachments on each card.</li>
         <li>Your team does not use Google accounts.</li>
         <li>You want a large ecosystem of templates, guides and people who already know the tool.</li>
       </ul>
