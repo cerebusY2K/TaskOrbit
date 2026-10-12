@@ -514,6 +514,422 @@ export const BOARD_TEMPLATES: readonly BoardTemplate[] = [
       },
     ],
   },
+  {
+    slug: "wedding-planning",
+    name: "Wedding planning",
+    title: "Free wedding planning checklist template",
+    description:
+      "A free wedding planning checklist as a task board: venue, suppliers, guests and final-month tasks over nine months, with dates and dependencies, in TaskOrb.",
+    intro:
+      "Most wedding jobs wait on two things: the venue and the guest count. This board starts about nine months out, books those first, and then lines up suppliers, invitations and the final month around them.",
+    bestFor: ["Couples planning their own wedding", "Sharing jobs with family by inviting them to the board", "Seeing nine months of planning on one timeline"],
+    color: "#ff7eb6",
+    cards: [
+      {
+        name: "Budget and venue",
+        color: "#c4882a",
+        tasks: [
+          { name: "Set the budget and guest count", start: 0, due: 14, priority: "high" },
+          { name: "Book the venue", start: 14, due: 45, priority: "urgent", dependsOn: "Set the budget and guest count" },
+          { name: "Book the officiant", start: 30, due: 60, dependsOn: "Book the venue" },
+        ],
+      },
+      {
+        name: "Suppliers",
+        color: "#8d3d55",
+        tasks: [
+          { name: "Book the photographer", start: 45, due: 90, priority: "high", waitingFor: "Venue and date confirmed" },
+          { name: "Book catering and the cake", start: 60, due: 120, waitingFor: "Rough guest count" },
+          { name: "Choose music or a DJ", start: 90, due: 150 },
+          { name: "Order flowers", start: 150, due: 200 },
+        ],
+      },
+      {
+        name: "Guests",
+        color: "#2c4f8f",
+        tasks: [
+          { name: "Draft the guest list", start: 0, due: 21 },
+          { name: "Send save-the-dates", start: 60, due: 75, dependsOn: "Draft the guest list" },
+          { name: "Send invitations", start: 180, due: 195, priority: "high", dependsOn: "Send save-the-dates" },
+          { name: "Collect RSVPs and plan seating", start: 195, due: 255, dependsOn: "Send invitations" },
+        ],
+      },
+      {
+        name: "Final month",
+        color: "#2f6b45",
+        tasks: [
+          { name: "Final dress or suit fitting", start: 240, due: 260, priority: "high" },
+          { name: "Confirm timings with every supplier", start: 255, due: 265, priority: "high" },
+          { name: "Wedding day", start: 270, due: 270, priority: "urgent" },
+          { name: "Send thank-you notes", start: 275, due: 300, dependsOn: "Wedding day" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "product-roadmap",
+    name: "Product roadmap",
+    title: "Free product roadmap template",
+    description:
+      "A free product roadmap template for one quarter: discovery, now, next and measure cards with dated tasks and dependencies, ready to use in TaskOrb.",
+    intro:
+      "A roadmap is only useful if it says what is being built now, what comes next, and how you will know it worked. This board plans one quarter that way, starting from customer feedback and ending with the review that sets the next one.",
+    bestFor: ["Founders and product managers", "Small teams that want a roadmap without a separate tool", "Sharing the plan with the whole team on a timeline"],
+    color: "#5b8cff",
+    cards: [
+      {
+        name: "Discovery",
+        color: "#3e4c59",
+        tasks: [
+          { name: "Review customer feedback and requests", start: 0, due: 7, priority: "high" },
+          { name: "Pick the quarter's themes", start: 7, due: 10, priority: "high", dependsOn: "Review customer feedback and requests" },
+          { name: "Share the roadmap with the team", start: 10, due: 12, dependsOn: "Pick the quarter's themes" },
+        ],
+      },
+      {
+        name: "Now",
+        color: "#0f6e6e",
+        tasks: [
+          { name: "Fix the top performance issues", start: 14, due: 30 },
+          { name: "Ship the top customer request", start: 12, due: 40, priority: "urgent", waitingFor: "Agreed themes" },
+          { name: "Improve the onboarding flow", start: 20, due: 45, priority: "high" },
+        ],
+      },
+      {
+        name: "Next",
+        color: "#6d4c8a",
+        tasks: [
+          { name: "Design the next big feature", start: 30, due: 55 },
+          { name: "Prototype and test with five users", start: 55, due: 70, dependsOn: "Design the next big feature" },
+          { name: "Build the next big feature", start: 70, due: 88, priority: "high", dependsOn: "Prototype and test with five users" },
+        ],
+      },
+      {
+        name: "Measure",
+        color: "#2f6b45",
+        tasks: [
+          { name: "Set success metrics", start: 10, due: 14 },
+          { name: "Monthly roadmap review", start: 40, due: 42, dependsOn: "Set success metrics" },
+          { name: "Quarter review and next roadmap", start: 88, due: 91, priority: "high", dependsOn: "Monthly roadmap review" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "bug-tracking",
+    name: "Bug tracker",
+    title: "Free bug tracker template",
+    description:
+      "A free bug tracking board: reported, triage, fixing and release cards with priorities, owners and dates, so every bug has a next step. Ready to use in TaskOrb.",
+    intro:
+      "Bugs get lost between the person who reported them and the person who could fix them. This board walks a few sample bugs from report to release over two weeks, with a weekly triage and a note back to whoever reported each one.",
+    bestFor: ["Small software teams without a ticketing system", "Support and engineering sharing one board", "Replacing a bugs spreadsheet"],
+    color: "#ff6b57",
+    cards: [
+      {
+        name: "Reported",
+        color: "#c4553a",
+        tasks: [
+          { name: "Checkout fails on Safari", start: 0, due: 2, priority: "urgent", nextAction: "Reproduce on the latest Safari" },
+          { name: "Wrong totals in the monthly report", start: 0, due: 5, priority: "high" },
+          { name: "Typo on the pricing page", start: 0, due: 3, priority: "low" },
+        ],
+      },
+      {
+        name: "Triage",
+        color: "#c4882a",
+        tasks: [
+          { name: "Agree how bugs are prioritised", start: 0, due: 1, priority: "high" },
+          { name: "Weekly bug triage", start: 1, due: 1, dependsOn: "Agree how bugs are prioritised" },
+          { name: "Second weekly triage", start: 8, due: 8, dependsOn: "Weekly bug triage" },
+        ],
+      },
+      {
+        name: "Fixing",
+        color: "#2c4f8f",
+        tasks: [
+          { name: "Fix the Safari checkout bug", start: 1, due: 3, priority: "urgent", waitingFor: "Steps to reproduce from support" },
+          { name: "Fix the report totals", start: 3, due: 7, priority: "high" },
+          { name: "Add a test for each fix", start: 3, due: 9, dependsOn: "Fix the Safari checkout bug" },
+        ],
+      },
+      {
+        name: "Verify and release",
+        color: "#2f6b45",
+        tasks: [
+          { name: "Verify the fixes on staging", start: 4, due: 10, waitingFor: "Fixes merged" },
+          { name: "Release the bug fixes", start: 10, due: 10, priority: "high", dependsOn: "Verify the fixes on staging" },
+          { name: "Tell the people who reported them", start: 10, due: 11, dependsOn: "Release the bug fixes" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "study-planner",
+    name: "Exam study planner",
+    title: "Free exam study planner template",
+    description:
+      "A free study planner for exam season: a revision timetable, two subjects, past papers and exam day on one board with dates, ready to use in TaskOrb.",
+    intro:
+      "Revision goes wrong when the hard topics are left for the last week. This board covers six weeks before an exam: a timetable first, then each subject in chunks, with timed past papers early enough to learn from the mistakes.",
+    bestFor: ["Students revising for exams", "Study groups sharing one plan", "Seeing every subject's revision on a timeline"],
+    color: "#2bb5c9",
+    cards: [
+      {
+        name: "Plan",
+        color: "#3e4c59",
+        tasks: [
+          { name: "List every topic in the syllabus", start: 0, due: 1, priority: "high" },
+          { name: "Make a weekly revision timetable", start: 1, due: 2, priority: "high", dependsOn: "List every topic in the syllabus" },
+          { name: "Gather notes and past papers", start: 0, due: 3 },
+        ],
+      },
+      {
+        name: "Subject one",
+        color: "#0f6e6e",
+        tasks: [
+          { name: "Revise topics 1 to 3", start: 3, due: 10 },
+          { name: "Revise topics 4 to 6", start: 10, due: 17, dependsOn: "Revise topics 1 to 3" },
+          { name: "Flashcards for key terms", start: 3, due: 20 },
+        ],
+      },
+      {
+        name: "Subject two",
+        color: "#6d4c8a",
+        tasks: [
+          { name: "Revise the first half", start: 3, due: 14 },
+          { name: "Ask the teacher about weak topics", start: 10, due: 12, nextAction: "Write down three questions first" },
+          { name: "Revise the second half", start: 14, due: 24, dependsOn: "Revise the first half" },
+        ],
+      },
+      {
+        name: "Practice and exams",
+        color: "#c4553a",
+        tasks: [
+          { name: "First timed past paper", start: 20, due: 20, priority: "high" },
+          { name: "Review the mistakes", start: 21, due: 23, dependsOn: "First timed past paper" },
+          { name: "Second timed past paper", start: 30, due: 30, priority: "high", dependsOn: "Review the mistakes" },
+          { name: "Exam day", start: 41, due: 41, priority: "urgent" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "trip-planning",
+    name: "Trip planner",
+    title: "Free trip planning checklist template",
+    description:
+      "A free trip planner as a task board: flights, stays, visas, bookings and packing over eight weeks, with dates and dependencies, ready to use in TaskOrb.",
+    intro:
+      "Trips need a few things done early, like visas and flights, and many small things done late. This board starts eight weeks before you leave and puts each booking in order, so the itinerary is settled before you pack.",
+    bestFor: ["Holidays with family or friends", "Group trips where everyone takes a job", "Work trips with visas and bookings"],
+    color: "#ff9f43",
+    cards: [
+      {
+        name: "Book",
+        color: "#2c4f8f",
+        tasks: [
+          { name: "Pick dates and budget", start: 0, due: 3, priority: "high" },
+          { name: "Book flights", start: 3, due: 10, priority: "urgent", dependsOn: "Pick dates and budget" },
+          { name: "Book places to stay", start: 7, due: 14, priority: "high", dependsOn: "Book flights" },
+        ],
+      },
+      {
+        name: "Documents",
+        color: "#3e4c59",
+        tasks: [
+          { name: "Check passports are valid", start: 0, due: 3, priority: "high" },
+          { name: "Apply for visas", start: 3, due: 30, priority: "high", dependsOn: "Check passports are valid" },
+          { name: "Buy travel insurance", start: 10, due: 14 },
+        ],
+      },
+      {
+        name: "Plan",
+        color: "#c4882a",
+        tasks: [
+          { name: "Shortlist things to do", start: 14, due: 28 },
+          { name: "Book tours and tickets", start: 28, due: 40, dependsOn: "Shortlist things to do" },
+          { name: "Share the itinerary with everyone", start: 40, due: 45, dependsOn: "Book tours and tickets" },
+        ],
+      },
+      {
+        name: "Pack and go",
+        color: "#2f6b45",
+        tasks: [
+          { name: "Write the packing list", start: 45, due: 52 },
+          { name: "Pack and check in online", start: 54, due: 55, priority: "high", dependsOn: "Write the packing list" },
+          { name: "Departure day", start: 56, due: 56, priority: "urgent" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "home-renovation",
+    name: "Home renovation",
+    title: "Free home renovation project plan template",
+    description:
+      "A free home renovation plan: budget, quotes, builders, works and the final snag list over about twelve weeks, with dates and dependencies, in TaskOrb.",
+    intro:
+      "Renovations overrun when the order of trades is guessed. This board plans a single room or small renovation over about twelve weeks, from scope and quotes to the snag list, with each stage waiting on the one before it.",
+    bestFor: ["A kitchen, bathroom or single-room renovation", "Homeowners managing their own builders", "Keeping a partner or contractor on the same plan"],
+    color: "#c4882a",
+    cards: [
+      {
+        name: "Plan and budget",
+        color: "#c4882a",
+        tasks: [
+          { name: "Decide the scope and must-haves", start: 0, due: 5, priority: "high" },
+          { name: "Set the budget with a 15% buffer", start: 5, due: 8, priority: "high", dependsOn: "Decide the scope and must-haves" },
+          { name: "Check which permits are needed", start: 5, due: 14, dependsOn: "Decide the scope and must-haves" },
+        ],
+      },
+      {
+        name: "Contractors",
+        color: "#3e4c59",
+        tasks: [
+          { name: "Get three quotes", start: 8, due: 21, priority: "high", waitingFor: "Agreed scope" },
+          { name: "Check references and pick a builder", start: 21, due: 26, dependsOn: "Get three quotes" },
+          { name: "Sign the contract and agree a schedule", start: 26, due: 30, priority: "urgent", dependsOn: "Check references and pick a builder" },
+        ],
+      },
+      {
+        name: "Works",
+        color: "#c4553a",
+        tasks: [
+          { name: "Demolition and strip-out", start: 35, due: 40 },
+          { name: "Electrics and plumbing", start: 40, due: 52, priority: "high", dependsOn: "Demolition and strip-out" },
+          { name: "Plastering and flooring", start: 52, due: 65, dependsOn: "Electrics and plumbing" },
+        ],
+      },
+      {
+        name: "Finish",
+        color: "#2f6b45",
+        tasks: [
+          { name: "Choose paint, fixtures and fittings", start: 14, due: 35 },
+          { name: "Painting and fixtures", start: 65, due: 75, waitingFor: "Plastering finished" },
+          { name: "Snag list walk-through", start: 76, due: 78, priority: "high", dependsOn: "Painting and fixtures" },
+          { name: "Final payment", start: 80, due: 82, dependsOn: "Snag list walk-through" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "job-search",
+    name: "Job search tracker",
+    title: "Free job search tracker template",
+    description:
+      "A free job search tracker: CV, applications, interviews and offers on one board with dates and follow-ups, so no application is forgotten. Ready to use in TaskOrb.",
+    intro:
+      "A job search is dozens of applications, each with its own follow-up date. This board covers about eight weeks: getting the CV ready, a steady pace of applications, interview practice, and comparing offers at the end.",
+    bestFor: ["Anyone looking for a new job", "Tracking each application as its own task", "Sharing progress with a mentor or career coach"],
+    color: "#22b07d",
+    cards: [
+      {
+        name: "Prepare",
+        color: "#3e4c59",
+        tasks: [
+          { name: "Decide target roles and companies", start: 0, due: 3, priority: "high" },
+          { name: "Update the CV", start: 3, due: 7, priority: "high", dependsOn: "Decide target roles and companies" },
+          { name: "Refresh the LinkedIn profile", start: 5, due: 9 },
+        ],
+      },
+      {
+        name: "Applications",
+        color: "#2c4f8f",
+        tasks: [
+          { name: "Ask three people for referrals", start: 7, due: 14 },
+          { name: "Apply to five roles a week", start: 7, due: 42, priority: "high", waitingFor: "Updated CV" },
+          { name: "Follow up on applications", start: 14, due: 49 },
+        ],
+      },
+      {
+        name: "Interviews",
+        color: "#6d4c8a",
+        tasks: [
+          { name: "Practise common interview questions", start: 10, due: 20 },
+          { name: "Prepare stories for behavioural questions", start: 14, due: 24, dependsOn: "Practise common interview questions" },
+          { name: "Send thank-you notes after each interview", start: 20, due: 52 },
+        ],
+      },
+      {
+        name: "Offers",
+        color: "#2f6b45",
+        tasks: [
+          { name: "Compare offers", start: 45, due: 50, waitingFor: "Offers in writing" },
+          { name: "Negotiate the salary", start: 50, due: 53, priority: "high", dependsOn: "Compare offers" },
+          { name: "Accept and give notice", start: 53, due: 55, priority: "urgent", dependsOn: "Negotiate the salary" },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "podcast-launch",
+    name: "Podcast launch",
+    title: "Free podcast launch plan template",
+    description:
+      "A free podcast launch plan: concept, recording, editing, artwork and launch tasks over eight weeks, with dates and dependencies, ready to use in TaskOrb.",
+    intro:
+      "A podcast launch goes better with a few episodes ready on day one. This board plans about eight weeks from the idea to launch, with guests, recording, editing and artwork lined up so three episodes go out together.",
+    bestFor: ["New podcasters", "Co-hosts splitting recording and editing", "Brands starting a company podcast"],
+    color: "#a970ff",
+    cards: [
+      {
+        name: "Concept",
+        color: "#6d4c8a",
+        tasks: [
+          { name: "Pick the topic and audience", start: 0, due: 3, priority: "high" },
+          { name: "Choose the name and format", start: 3, due: 7, dependsOn: "Pick the topic and audience" },
+          { name: "Book the first guests", start: 7, due: 21, dependsOn: "Choose the name and format" },
+        ],
+      },
+      {
+        name: "Record",
+        color: "#0f6e6e",
+        tasks: [
+          { name: "Buy a microphone and set up", start: 3, due: 10 },
+          { name: "Record a trailer", start: 10, due: 12, dependsOn: "Buy a microphone and set up" },
+          { name: "Record the first three episodes", start: 14, due: 35, priority: "high", waitingFor: "Guests booked" },
+        ],
+      },
+      {
+        name: "Edit and artwork",
+        color: "#8d3d55",
+        tasks: [
+          { name: "Design the cover art", start: 7, due: 17 },
+          { name: "Choose intro music", start: 7, due: 14 },
+          { name: "Edit the first three episodes", start: 21, due: 42, priority: "high", waitingFor: "Raw recordings" },
+        ],
+      },
+      {
+        name: "Launch",
+        color: "#c4553a",
+        tasks: [
+          { name: "Set up hosting and submit to directories", start: 14, due: 21, priority: "high" },
+          { name: "Publish the trailer", start: 21, due: 21 },
+          { name: "Launch with three episodes", start: 49, due: 49, priority: "urgent", waitingFor: "Edited episodes" },
+          { name: "Ask friends for ratings and reviews", start: 49, due: 56, dependsOn: "Launch with three episodes" },
+        ],
+      },
+    ],
+  },
+];
+
+export const TEMPLATE_GROUPS: readonly { title: string; intro: string; slugs: readonly string[] }[] = [
+  {
+    title: "Project templates",
+    intro: "Plans with a launch or finish date, where several people hand work to each other.",
+    slugs: ["product-launch", "product-roadmap", "website-redesign", "marketing-campaign", "content-calendar", "event-planning", "podcast-launch"],
+  },
+  {
+    title: "Team process templates",
+    intro: "Work a team repeats every week or with every new person.",
+    slugs: ["sprint-planning", "bug-tracking", "hiring-pipeline", "employee-onboarding", "client-onboarding"],
+  },
+  {
+    title: "Personal planning templates",
+    intro: "Big life jobs you can share with a partner, family or friends.",
+    slugs: ["moving-house", "wedding-planning", "home-renovation", "trip-planning", "job-search", "study-planner"],
+  },
 ];
 
 export function boardTemplate(slug: string) {

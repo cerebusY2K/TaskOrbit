@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOARD_TEMPLATES, shiftISO } from "./templates";
+import { BOARD_TEMPLATES, shiftISO, TEMPLATE_GROUPS } from "./templates";
 
 describe("board templates", () => {
   it("have unique slugs and only depend on earlier tasks on the same card", () => {
@@ -15,6 +15,11 @@ describe("board templates", () => {
         });
       }
     }
+  });
+
+  it("puts every template in exactly one group", () => {
+    const grouped = TEMPLATE_GROUPS.flatMap((group) => group.slugs);
+    expect([...grouped].sort()).toEqual(BOARD_TEMPLATES.map((template) => template.slug).sort());
   });
 
   it("shifts days across month ends", () => {
