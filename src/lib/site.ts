@@ -76,6 +76,15 @@ export const PUBLIC_PAGES: readonly PublicPage[] = [
     priority: 0.8,
   },
   {
+    path: "/blog",
+    label: "Blog",
+    title: "Guides for small teams",
+    description:
+      "Practical notes for small-team leads, freelancers and agency owners on dependencies, on-hold work, a light Gantt chart, and spotting overload.",
+    changeFrequency: "weekly",
+    priority: 0.7,
+  },
+  {
     path: "/trello-alternative",
     label: "Trello alternative",
     title: "A free Trello alternative for tracking dependencies",
@@ -127,7 +136,7 @@ export function fullTitle(page: Pick<PublicPage, "title" | "absoluteTitle">) {
   return page.absoluteTitle ? page.title : `${page.title} · TaskOrb`;
 }
 
-const SHARE_IMAGE = {
+export const SHARE_IMAGE = {
   url: "/opengraph-image.png",
   width: 1200,
   height: 630,
