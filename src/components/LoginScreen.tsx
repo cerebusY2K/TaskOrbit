@@ -12,12 +12,14 @@ export function LoginScreen({
   onSignedIn,
   inviteFrom,
   inviteBoard,
+  templateName,
   children,
 }: {
   config: PublicConfig;
   onSignedIn: () => Promise<void>;
   inviteFrom?: string | null;
   inviteBoard?: string | null;
+  templateName?: string | null;
   children?: ReactNode;
 }) {
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +91,10 @@ export function LoginScreen({
                 ? "Sign in with Google to join the board. Your own boards stay private."
                 : "Sign in with Google to join. Your boards stay private."}
             </p>
+          ) : templateName ? (
+            <h1 className="mt-3 text-sm leading-relaxed text-white/55">
+              Sign in with Google and your {templateName} board will be ready.
+            </h1>
           ) : (
             <h1 className="mt-3 text-sm leading-relaxed text-white/55">
               Free task board for teams that shows what every task is waiting on

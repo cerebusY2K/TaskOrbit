@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BoardService, DEFAULT_BOARDS } from "./board-service";
 import { isOverdue } from "./domain";
 import { MemoryStore } from "./store";
+import { boardTemplate, templateTaskCount } from "./templates";
 import type { SessionUser } from "./types";
 
 const ada: SessionUser = {
@@ -402,6 +403,28 @@ describe("board", () => {
     }
     expect((await service.board(ada)).cards.find((item) => item.isSelf)?.boardId).toBe(second.id);
     await expect(service.deleteBoard(ada, second.id)).rejects.toThrow(/at least one board/i);
+  });
+
+  it("creates a board from a template with dates counted from the start day", async () => {
+    const { service } = setup();
+    await service.signIn(ada);
+    const template = boardTemplate("product-launch")!;
+    const board = await service.createBoardFromTemplate(ada, template.slug, "2026-10-30");
+    expect(board.name).toBe(template.name);
+    const loaded = await service.board(ada);
+    const cards = loaded.cards.filter((card) => card.boardId === board.id);
+    expect(cards.map((card) => card.name).sort()).toEqual([...template.cards.map((card) => card.name), "Done"].sort());
+    const tasks = loaded.dependencies.filter((task) => cards.some((card) => card.id === task.cardId));
+    expect(tasks).toHaveLength(templateTaskCount(template));
+    const deploy = tasks.find((task) => task.name === "Deploy to production")!;
+    expect(deploy.startDate).toBe("2026-11-19");
+    expect(deploy.deadline).toBe("2026-11-19");
+    expect(deploy.priority).toBe("urgent");
+    expect(tasks.find((task) => task.id === deploy.dependantOnId)?.name).toBe("QA pass on staging");
+    expect(tasks.find((task) => task.name === "Launch email")?.waitingFor).toBe("Release notes from Product");
+    await expect(service.createBoardFromTemplate(ada, "nope")).rejects.toThrow(/not found/);
+    await expect(service.createBoardFromTemplate(ada, template.slug, "30/10/2026")).rejects.toThrow();
+    await expect(service.createBoardFromTemplate(sam, template.slug)).rejects.toThrow(/Sign in/);
   });
 
   it("creates the default boards once, even when sign-in and load race", async () => {

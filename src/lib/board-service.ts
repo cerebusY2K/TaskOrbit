@@ -1,14 +1,17 @@
 import { createHash, randomBytes, randomUUID } from "crypto";
 import {
   assertColor,
+  assertDeadline,
   assertDependencyDraft,
   assertEmail,
   assertName,
   defaultCardColor,
   normalizeEmail,
+  todayISO,
 } from "./domain";
 import { BoardError } from "./errors";
 import type { Pusher } from "./push";
+import { boardTemplate, shiftISO } from "./templates";
 import type { Store } from "./store";
 import type { Board, BoardMember, Card, Dependency, PushDevice, SessionUser, UserProfile } from "./types";
 import { OWNER_ASSIGNEE } from "./types";
@@ -208,6 +211,67 @@ export class BoardService {
     const created = await this.store.createBoard(board);
     await this.doneCard(created);
     return created;
+  }
+
+  async createBoardFromTemplate(actor: Actor, slug: unknown, startDay?: unknown) {
+    const template = typeof slug === "string" ? boardTemplate(slug) : null;
+    if (!template) throw new BoardError("That template was not found.", 404);
+    const today = assertDeadline(startDay, "Start day") ?? todayISO();
+    const user = await this.store.getUser(actor.uid);
+    if (!user) throw new BoardError("Sign in required.", 401);
+    await this.ensureWorkspace(user);
+    const board = await this.createBoard(actor, { name: template.name, color: template.color });
+    const day = (offset: number | undefined) => (offset === undefined ? null : shiftISO(today, offset));
+    await Promise.all(
+      template.cards.map(async (item) => {
+        const timestamp = now();
+        const card = await this.store.createCard({
+          id: id(),
+          ownerId: actor.uid,
+          boardId: board.id,
+          name: item.name,
+          color: item.color,
+          isSelf: false,
+          assigneeEmail: null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        });
+        const tasks: Dependency[] = [];
+        for (const task of item.tasks) {
+          const draft = assertDependencyDraft(
+            {
+              name: task.name,
+              startDate: day(task.start),
+              deadline: day(task.due),
+              priority: task.priority ?? null,
+              waitingFor: task.waitingFor ?? null,
+              nextAction: task.nextAction ?? null,
+              dependantOnId: task.dependsOn ? tasks.find((other) => other.name === task.dependsOn)?.id : undefined,
+            },
+            tasks,
+            null,
+          );
+          tasks.push({
+            id: id(),
+            ownerId: actor.uid,
+            cardId: card.id,
+            linkId: id(),
+            ...draft,
+            taskOwner: null,
+            assigneeMemberId: null,
+            doneFromCardId: null,
+            assignedByUid: actor.uid,
+            assignedByName: actor.name,
+            originCardName: card.name,
+            deliveredTo: [],
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          });
+        }
+        await Promise.all(tasks.map((task) => this.store.createDependency(task)));
+      }),
+    );
+    return board;
   }
 
   async updateBoard(actor: Actor, boardId: string, input: { name?: unknown; color?: unknown }) {

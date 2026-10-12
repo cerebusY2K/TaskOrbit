@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BOARD_TEMPLATES } from "./templates";
 
 export const SITE_URL = (process.env.SITE_URL || "https://taskorb.app").replace(/\/$/, "");
 
@@ -66,6 +67,33 @@ export const PUBLIC_PAGES: readonly PublicPage[] = [
     priority: 0.8,
   },
   {
+    path: "/templates",
+    label: "Templates",
+    title: "Free task board templates",
+    description:
+      "Free project templates for TaskOrb: product launch, event planning, hiring and client onboarding boards with dated tasks and dependencies.",
+    changeFrequency: "weekly",
+    priority: 0.8,
+  },
+  {
+    path: "/trello-alternative",
+    label: "Trello alternative",
+    title: "A free Trello alternative for tracking dependencies",
+    description:
+      "How TaskOrb compares with Trello: boards and cards, plus a waiting-for field, task dependencies and a Gantt timeline. And when Trello is the better pick.",
+    changeFrequency: "monthly",
+    priority: 0.7,
+  },
+  {
+    path: "/asana-alternative",
+    label: "Asana alternative",
+    title: "A simple, free Asana alternative for small teams",
+    description:
+      "How TaskOrb compares with Asana: a lighter task board with owners, dates, dependencies and a timeline. And when Asana is the better choice for your team.",
+    changeFrequency: "monthly",
+    priority: 0.7,
+  },
+  {
     path: "/privacy",
     label: "Privacy",
     title: "Privacy Policy",
@@ -95,7 +123,7 @@ export function pageUrl(path: string) {
   return path === "/" ? `${SITE_URL}/` : `${SITE_URL}${path}`;
 }
 
-export function fullTitle(page: PublicPage) {
+export function fullTitle(page: Pick<PublicPage, "title" | "absoluteTitle">) {
   return page.absoluteTitle ? page.title : `${page.title} · TaskOrb`;
 }
 
@@ -106,8 +134,24 @@ const SHARE_IMAGE = {
   alt: "TaskOrb: every task, in orbit. Task boards that show who owns what, and what each task is waiting on.",
 };
 
+export function templatePath(slug: string) {
+  return `/templates/${slug}`;
+}
+
+/** Template detail pages are in the sitemap but not the footer. */
+export const TEMPLATE_PAGES = BOARD_TEMPLATES.map((template) => ({
+  path: templatePath(template.slug),
+  title: template.title,
+  description: template.description,
+  changeFrequency: "monthly" as const,
+  priority: 0.6,
+}));
+
 export function publicMetadata(path: string): Metadata {
-  const page = publicPage(path);
+  return pageMetadata(publicPage(path));
+}
+
+export function pageMetadata(page: Pick<PublicPage, "path" | "title" | "absoluteTitle" | "description">): Metadata {
   const title = fullTitle(page);
   const canonical = page.path === "/" ? "/" : page.path;
   // The homepage picks up the file-based share image. Other pages replace Open Graph

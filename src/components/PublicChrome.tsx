@@ -2,7 +2,7 @@ import Link from "next/link";
 import { OrbitMark } from "@/components/OrbitMark";
 import { CONTACT_EMAIL, PUBLIC_PAGES } from "@/lib/site";
 
-const HEADER_LINKS = ["/features", "/gantt", "/task-dependencies"] as const;
+const HEADER_LINKS = ["/features", "/templates", "/gantt", "/task-dependencies"] as const;
 
 export function PublicHeader() {
   const links = HEADER_LINKS.map((path) => PUBLIC_PAGES.find((page) => page.path === path)!);
@@ -48,6 +48,7 @@ export function RelatedGuides({ current }: { current: string }) {
   const pages = [
     { href: "/", label: "TaskOrb homepage" },
     { href: "/features", label: "Task board features" },
+    { href: "/templates", label: "Free task board templates" },
     { href: "/gantt", label: "Free Gantt chart for small teams" },
     { href: "/task-dependencies", label: "See what every task is waiting on" },
   ].filter((page) => page.href !== current);
