@@ -405,6 +405,34 @@ describe("board", () => {
     await expect(service.deleteBoard(ada, second.id)).rejects.toThrow(/at least one board/i);
   });
 
+  it("saves labels and a checklist on a task and keeps them when other fields change", async () => {
+    const { service } = setup();
+    await service.signIn(ada);
+    const card = await service.createCard(ada, { name: "Launch" });
+    const { dependency } = await service.createDependency(ada, {
+      cardId: card.id,
+      name: "Press kit",
+      labels: ["Marketing", "marketing", "Urgent"],
+      checklist: [{ text: "Logo files" }, { text: "Screenshots", done: true }],
+    });
+    expect(dependency.labels).toEqual(["Marketing", "Urgent"]);
+    expect(dependency.checklist.map((item) => [item.text, item.done])).toEqual([
+      ["Logo files", false],
+      ["Screenshots", true],
+    ]);
+    const renamed = await service.updateDependency(ada, dependency.id, { name: "Press kit v2" });
+    expect(renamed.labels).toEqual(["Marketing", "Urgent"]);
+    expect(renamed.checklist).toHaveLength(2);
+    const ticked = await service.updateDependency(ada, dependency.id, {
+      checklist: dependency.checklist.map((item) => ({ ...item, done: true })),
+      labels: [],
+    });
+    expect(ticked.checklist.every((item) => item.done)).toBe(true);
+    expect(ticked.checklist[0].id).toBe(dependency.checklist[0].id);
+    expect(ticked.labels).toEqual([]);
+    await expect(service.updateDependency(ada, dependency.id, { labels: "Bug" })).rejects.toThrow(/list/);
+  });
+
   it("creates a board from a template with dates counted from the start day", async () => {
     const { service } = setup();
     await service.signIn(ada);

@@ -25,11 +25,19 @@ export function AppShell({
   const [loading, setLoading] = useState(!initialConfig);
   const [error, setError] = useState<string | null>(null);
   const [openBoardId, setOpenBoardId] = useState<string | null>(null);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [pendingTemplate, setPendingTemplate] = useState<BoardTemplate | null>(null);
   const [creating, setCreating] = useState<BoardTemplate | null>(null);
   const [templateError, setTemplateError] = useState<string | null>(null);
 
-  const openBoard = useCallback((boardId: string) => setOpenBoardId(boardId), []);
+  const openBoard = useCallback((boardId: string) => {
+    setOpenTaskId(null);
+    setOpenBoardId(boardId);
+  }, []);
+  const openTask = useCallback((boardId: string, taskId: string) => {
+    setOpenTaskId(taskId);
+    setOpenBoardId(boardId);
+  }, []);
 
   const signOut = useCallback(async () => {
     await api("/api/auth/logout", { method: "POST" });
@@ -163,7 +171,7 @@ export function AppShell({
   if (!openBoardId) {
     return (
       <>
-        <BoardOrbit payload={board} onOpen={openBoard} onSignOut={signOut} />
+        <BoardOrbit payload={board} onOpen={openBoard} onOpenTask={openTask} onReload={refresh} onSignOut={signOut} />
         {notice}
       </>
     );
@@ -173,6 +181,7 @@ export function AppShell({
       key={openBoardId}
       board={board}
       initialBoardId={openBoardId}
+      initialTaskId={openTaskId}
       onReload={refresh}
       onSignOut={signOut}
       onShowAll={() => setOpenBoardId(null)}

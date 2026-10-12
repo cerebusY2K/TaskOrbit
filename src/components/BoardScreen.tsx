@@ -4,8 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api-client";
 import { isOverdue, todayISO } from "@/lib/domain";
 import { EVERYONE, summarizeMembers } from "@/lib/member-summary";
+import {
+  EMPTY_FILTER,
+  MY_TASKS,
+  NO_OWNER,
+  boardLabels,
+  checklistProgress,
+  filterIsActive,
+  labelColor,
+  matchesFilter,
+  myTasks,
+  type TaskFilter,
+} from "@/lib/task-filters";
 import type { Board, BoardPayload, Card, Dependency, Status } from "@/lib/types";
-import { OWNER_ASSIGNEE, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
+import { OWNER_ASSIGNEE, PRIORITIES, PRIORITY_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { BoardDialog } from "./BoardDialog";
 import { CardDialog } from "./CardDialog";
 import { CardOrbit } from "./CardOrbit";
@@ -15,6 +27,7 @@ import { InstallButton } from "./InstallButton";
 import { OrbitMark } from "./OrbitMark";
 import { MemberSummary } from "./MemberSummary";
 import { MembersDialog } from "./MembersDialog";
+import { MyTasksPanel } from "./MyTasksPanel";
 import { ghostBtn } from "./Modal";
 import { OrbitBackdrop } from "./OrbitBackdrop";
 import { PushToggle } from "./PushToggle";
@@ -54,12 +67,14 @@ function sortDependencies(items: Dependency[], today: string) {
 export function BoardScreen({
   board,
   initialBoardId = null,
+  initialTaskId = null,
   onReload,
   onSignOut,
   onShowAll,
 }: {
   board: BoardPayload;
   initialBoardId?: string | null;
+  initialTaskId?: string | null;
   onReload: () => Promise<void>;
   onSignOut: () => Promise<void>;
   onShowAll?: () => void;
@@ -74,6 +89,8 @@ export function BoardScreen({
     readOnly?: boolean;
   } | null>(null);
   const [membersOpen, setMembersOpen] = useState(false);
+  const [myTasksOpen, setMyTasksOpen] = useState(false);
+  const [filter, setFilter] = useState<TaskFilter>(EMPTY_FILTER);
   const [view, setViewState] = useState<BoardView>(savedView);
   const setView = (next: BoardView) => {
     setViewState(next);
@@ -136,12 +153,33 @@ export function BoardScreen({
     boardTasks,
     today,
   );
+  const filtering = filterIsActive(filter);
+  const visible = (task: Dependency) => !filtering || matchesFilter(task, filter, assignedToMe, today);
+  const labelsInUse = boardLabels(boardTasks);
+  const shownCount = boardTasks.filter(visible).length;
+  const mine = myTasks(board, today);
+  const myOverdue = mine.find((group) => group.key === "overdue")?.items.length ?? 0;
   const selectedPerson = summaries.find((summary) => summary.key === personKey) ?? null;
-  const timelineTasks = selectedPerson ? selectedPerson.tasks.map((item) => item.task) : boardTasks;
+  const timelineTasks = (selectedPerson ? selectedPerson.tasks.map((item) => item.task) : boardTasks).filter(visible);
   const openTask = (dependency: Dependency) => {
-    const card = cards.find((item) => item.id === dependency.cardId);
+    const card = board.cards.find((item) => item.id === dependency.cardId);
     if (card) setDependencyDialog({ card, dependency, readOnly: !canEdit(dependency) });
   };
+
+  useEffect(() => {
+    if (!initialTaskId) return;
+    const task = board.dependencies.find((item) => item.id === initialTaskId);
+    const card = task ? board.cards.find((item) => item.id === task.cardId) : undefined;
+    if (task && card) setDependencyDialog({ card, dependency: task });
+  }, [initialTaskId]);
+
+  useEffect(() => {
+    setFilter((current) => ({
+      ...current,
+      owner: current.owner === MY_TASKS || current.owner === NO_OWNER ? current.owner : "",
+      label: "",
+    }));
+  }, [active?.id]);
 
   useEffect(() => () => dragCleanup.current?.(), []);
 
@@ -307,6 +345,14 @@ export function BoardScreen({
           <button type="button" className={barBtn} onClick={() => setBoardDialog("new")}>
             Add board
           </button>
+          <button type="button" className={barBtn} onClick={() => setMyTasksOpen(true)}>
+            My tasks
+            {myOverdue > 0 ? (
+              <span className="ml-1.5 rounded-full bg-[#ff6b57] px-1.5 py-0.5 text-[11px] font-semibold text-white" title="Overdue">
+                {myOverdue}
+              </span>
+            ) : null}
+          </button>
           <button type="button" className={barBtn} onClick={() => setMembersOpen(true)}>
             Members
             <span className="ml-1.5 text-white/45">{members.length + 1}</span>
@@ -369,6 +415,96 @@ export function BoardScreen({
         </div>
       </nav>
 
+      <div role="search" className="relative flex items-center gap-2 overflow-x-auto px-3 pb-3 sm:px-5">
+        <input
+          type="search"
+          aria-label="Search tasks"
+          placeholder="Search tasks"
+          className="w-44 shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none ring-[#4d84ff] placeholder:text-white/40 focus:ring-2 sm:w-56"
+          value={filter.query}
+          onChange={(event) => setFilter({ ...filter, query: event.target.value })}
+        />
+        <select
+          aria-label="Filter by owner"
+          className={filterSelect(filter.owner !== "")}
+          value={filter.owner}
+          onChange={(event) => setFilter({ ...filter, owner: event.target.value })}
+        >
+          <option value="">Anyone</option>
+          <option value={MY_TASKS}>Assigned to me</option>
+          <option value={NO_OWNER}>Unassigned</option>
+          <option value={OWNER_ASSIGNEE}>{ownerName}</option>
+          {members.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.name}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Filter by priority"
+          className={filterSelect(filter.priority !== "")}
+          value={filter.priority}
+          onChange={(event) => setFilter({ ...filter, priority: event.target.value as TaskFilter["priority"] })}
+        >
+          <option value="">Any priority</option>
+          {PRIORITIES.map((item) => (
+            <option key={item} value={item}>
+              {PRIORITY_LABELS[item]}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Filter by status"
+          className={filterSelect(filter.status !== "")}
+          value={filter.status}
+          onChange={(event) => setFilter({ ...filter, status: event.target.value as TaskFilter["status"] })}
+        >
+          <option value="">Any status</option>
+          {STATUSES.map((item) => (
+            <option key={item} value={item}>
+              {STATUS_LABELS[item]}
+            </option>
+          ))}
+        </select>
+        {labelsInUse.length ? (
+          <select
+            aria-label="Filter by label"
+            className={filterSelect(filter.label !== "")}
+            value={filter.label}
+            onChange={(event) => setFilter({ ...filter, label: event.target.value })}
+          >
+            <option value="">Any label</option>
+            {labelsInUse.map((label) => (
+              <option key={label} value={label}>
+                {label}
+              </option>
+            ))}
+          </select>
+        ) : null}
+        <button
+          type="button"
+          aria-pressed={filter.overdue}
+          className={filterSelect(filter.overdue)}
+          onClick={() => setFilter({ ...filter, overdue: !filter.overdue })}
+        >
+          Overdue
+        </button>
+        {filtering ? (
+          <>
+            <span className="shrink-0 text-xs text-white/55">
+              {shownCount} of {boardTasks.length} tasks
+            </span>
+            <button
+              type="button"
+              className="shrink-0 rounded-lg px-2 py-1.5 text-sm text-[#8fb3ff] hover:bg-white/5 hover:text-white"
+              onClick={() => setFilter(EMPTY_FILTER)}
+            >
+              Clear
+            </button>
+          </>
+        ) : null}
+      </div>
+
       {error ? (
         <p role="alert" className="relative mx-3 mb-2 rounded-lg border border-[#ff6b57]/40 bg-[#3a1418]/80 px-3 py-2 text-sm text-[#ffb4a6] sm:mx-5">
           {error}
@@ -412,7 +548,7 @@ export function BoardScreen({
           today={today}
           tasksFor={(card) =>
             sortDependencies(
-              board.dependencies.filter((item) => item.cardId === card.id),
+              board.dependencies.filter((item) => item.cardId === card.id && visible(item)),
               today,
             )
           }
@@ -427,7 +563,7 @@ export function BoardScreen({
         <section className="relative flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-3 pb-4 sm:px-5">
           {cards.map((card) => {
             const dependencies = sortDependencies(
-              board.dependencies.filter((item) => item.cardId === card.id),
+              board.dependencies.filter((item) => item.cardId === card.id && visible(item)),
               today,
             );
             const openCount = dependencies.filter((item) => item.status !== "done").length;
@@ -478,7 +614,7 @@ export function BoardScreen({
                 <ul className="flex min-h-[12px] flex-1 flex-col gap-2 overflow-y-auto px-2 py-2">
                   {dependencies.length === 0 ? (
                     <li className="rounded-xl border border-dashed border-white/10 px-2 py-4 text-center text-xs text-white/40">
-                      {card.isDone ? "Tasks marked done land here" : "Drop a task here"}
+                      {filtering ? "No matching tasks" : card.isDone ? "Tasks marked done land here" : "Drop a task here"}
                     </li>
                   ) : (
                     dependencies.map((dependency) => {
@@ -559,6 +695,25 @@ export function BoardScreen({
                               ))}
                             </select>
                           </div>
+                          {dependency.labels.length || dependency.checklist.length ? (
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1 pl-6">
+                              {dependency.labels.map((label) => (
+                                <button
+                                  key={label}
+                                  type="button"
+                                  title={`Show only ${label}`}
+                                  className="rounded-full px-2 py-0.5 text-[11px] font-medium text-white/90"
+                                  style={{ background: `${labelColor(label)}33`, boxShadow: `inset 0 0 0 1px ${labelColor(label)}77` }}
+                                  onClick={() => setFilter({ ...filter, label })}
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                              {dependency.checklist.length ? (
+                                <ChecklistBadge {...checklistProgress(dependency)} />
+                              ) : null}
+                            </div>
+                          ) : null}
                           <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 pl-6 text-xs text-white/55">
                             {overdue ? (
                               <span className="font-semibold text-clay">Overdue · {formatDay(dependency.deadline!)}</span>
@@ -705,6 +860,7 @@ export function BoardScreen({
           focusHold={dependencyDialog.focusHold}
           readOnly={dependencyDialog.readOnly}
           people={people}
+          labelSuggestions={labelsInUse}
           siblings={board.dependencies.filter((item) => item.cardId === dependencyDialog.card.id)}
           onClose={() => setDependencyDialog(null)}
           onSubmit={async (input) => {
@@ -752,6 +908,20 @@ export function BoardScreen({
             setActiveBoardId(null);
             setToast(`You left ${active.name}.`);
             await onReload();
+          }}
+        />
+      ) : null}
+
+      {myTasksOpen ? (
+        <MyTasksPanel
+          payload={board}
+          today={today}
+          onClose={() => setMyTasksOpen(false)}
+          onChanged={onReload}
+          onOpen={(item) => {
+            setMyTasksOpen(false);
+            setActiveBoardId(item.board.id);
+            setDependencyDialog({ card: item.card, dependency: item.task });
           }}
         />
       ) : null}
@@ -816,6 +986,29 @@ export function BoardScreen({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function filterSelect(active: boolean) {
+  return `shrink-0 rounded-lg border px-2 py-1.5 text-sm transition ${
+    active ? "border-[#4d84ff]/70 bg-[#4d84ff]/20 text-white" : "border-white/10 bg-[#0b1430]/80 text-white/75 hover:text-white"
+  }`;
+}
+
+function ChecklistBadge({ done, total }: { done: number; total: number }) {
+  const complete = done === total;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${
+        complete ? "bg-[#22b07d]/25 text-[#7be0b5]" : "bg-white/10 text-white/70"
+      }`}
+      title={`Checklist: ${done} of ${total} done`}
+    >
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <path d="M1.5 5.2l2.2 2.2L8.5 2.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {done}/{total}
+    </span>
   );
 }
 

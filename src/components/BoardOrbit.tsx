@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { isOverdue, todayISO } from "@/lib/domain";
+import { myTasks } from "@/lib/task-filters";
 import type { Board, BoardPayload, Dependency } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
 import { InstallButton } from "./InstallButton";
+import { MyTasksPanel } from "./MyTasksPanel";
 import { OrbitMark } from "./OrbitMark";
 import { OrbitStage } from "./OrbitStage";
 
@@ -33,12 +35,17 @@ function buildItems(payload: BoardPayload): Item[] {
 export function BoardOrbit({
   payload,
   onOpen,
+  onOpenTask,
+  onReload,
   onSignOut,
 }: {
   payload: BoardPayload;
   onOpen: (boardId: string) => void;
+  onOpenTask: (boardId: string, taskId: string) => void;
+  onReload: () => Promise<void>;
   onSignOut: () => void;
 }) {
+  const [myTasksOpen, setMyTasksOpen] = useState(false);
   const items = useMemo(() => buildItems(payload), [payload]);
   const [opening, setOpening] = useState<string | null>(null);
   const [settled, setSettled] = useState(false);
@@ -51,6 +58,7 @@ export function BoardOrbit({
 
   const firstName = payload.user.name.split(" ")[0] || payload.user.name;
   const today = todayISO();
+  const myOverdue = myTasks(payload, today).find((group) => group.key === "overdue")?.items.length ?? 0;
 
   return (
     <div className="orbit-space relative flex h-screen min-h-0 flex-col overflow-hidden text-white">
@@ -65,6 +73,18 @@ export function BoardOrbit({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="rounded-md bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/20"
+            onClick={() => setMyTasksOpen(true)}
+          >
+            My tasks
+            {myOverdue > 0 ? (
+              <span className="ml-1.5 rounded-full bg-[#ff6b57] px-1.5 py-0.5 text-[11px] font-semibold text-white" title="Overdue">
+                {myOverdue}
+              </span>
+            ) : null}
+          </button>
           <InstallButton className="rounded-md bg-[#4d84ff] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[#3b70f0]" />
           {payload.isAdmin ? (
             <a
@@ -142,6 +162,15 @@ export function BoardOrbit({
           </button>
         ))}
       </nav>
+      {myTasksOpen ? (
+        <MyTasksPanel
+          payload={payload}
+          today={today}
+          onClose={() => setMyTasksOpen(false)}
+          onChanged={onReload}
+          onOpen={(item) => onOpenTask(item.board.id, item.task.id)}
+        />
+      ) : null}
     </div>
   );
 }

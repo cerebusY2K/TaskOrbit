@@ -7,6 +7,7 @@ export const metadata = publicMetadata("/asana-alternative");
 const ROWS = [
   ["Projects and tasks", "Boards, cards, then tasks", "Projects, sections, tasks and subtasks"],
   ["What a task is waiting on", "Depends on, waiting for, blocks, next action", "Task dependencies; check which plans include them"],
+  ["My tasks across projects", "Yes, grouped by due date", "Yes"],
   ["Gantt chart / timeline", "Included on every board, by task or by person", "Depends on your plan"],
   ["Portfolios, goals, forms, reporting", "None", "Yes, on some plans"],
   ["Integrations and automation", "None", "Many integrations and rules"],
@@ -54,8 +55,9 @@ export default function AsanaAlternativePage() {
 
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">What you keep</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
-        The parts a small team uses every day. Each task has an owner, a priority, a status, from and to dates, and
-        notes. A task can depend on another task on the same card, and record what it is waiting for, what it blocks,
+        The parts a small team uses every day. Each task has an owner, a priority, a status, from and to dates,
+        labels, a checklist and notes. My tasks lists everything assigned to you across every board, and each board
+        has search and filters. A task can depend on another task on the same card, and record what it is waiting for, what it blocks,
         and the next action, so a{" "}
         <Link
           href="/task-dependencies"
@@ -78,7 +80,7 @@ export default function AsanaAlternativePage() {
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-white/70">
         <li>You manage many projects across departments and need portfolios, goals or workload reporting.</li>
         <li>You need intake forms, approvals, rules or integrations with the rest of your tools.</li>
-        <li>You need subtasks, comments and attachments on tasks.</li>
+        <li>You need nested subtasks, comments and attachments on tasks.</li>
         <li>Your team needs admin controls and sign-in other than Google.</li>
       </ul>
       <p className="mt-3 text-sm leading-relaxed text-white/70">

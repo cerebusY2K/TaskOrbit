@@ -27,9 +27,16 @@ export default function FeaturesPage() {
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         A task has a name, an owner, a priority (low, medium, high or urgent), a status, a from date and a to date,
-        plus notes. The status is open, in progress, on hold or done. On hold asks for a reason. If the to date has
+        plus labels, a checklist and notes. The status is open, in progress, on hold or done. On hold asks for a reason. If the to date has
         passed and the task is not done, TaskOrb marks it overdue in red. The board records the last time the task
         changed.
+      </p>
+
+      <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Find your work</h2>
+      <p className="mt-3 text-sm leading-relaxed text-white/70">
+        My tasks lists every open task assigned to you, across all your boards, grouped into overdue, due today, the
+        next seven days and later. On a board, search the task names, notes, labels and checklists, and filter by owner,
+        priority, status, label or overdue. Filters apply to every view.
       </p>
 
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Three ways to see the same board</h2>

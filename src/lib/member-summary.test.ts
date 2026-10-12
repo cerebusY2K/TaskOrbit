@@ -35,6 +35,8 @@ function task(overrides: Partial<Dependency>): Dependency {
     blocks: null,
     nextAction: null,
     notes: null,
+    labels: [],
+    checklist: [],
     assignedByUid: "u1",
     assignedByName: "Owner",
     originCardName: "Card",

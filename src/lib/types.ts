@@ -75,6 +75,8 @@ export type Card = {
   updatedAt: string;
 };
 
+export type ChecklistItem = { id: string; text: string; done: boolean };
+
 export type Dependency = {
   id: string;
   ownerId: string;
@@ -95,6 +97,8 @@ export type Dependency = {
   blocks: string | null;
   nextAction: string | null;
   notes: string | null;
+  labels: string[];
+  checklist: ChecklistItem[];
   assignedByUid: string;
   assignedByName: string;
   originCardName: string;

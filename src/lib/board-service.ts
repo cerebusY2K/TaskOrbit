@@ -369,6 +369,8 @@ export class BoardService {
       blocks?: unknown;
       nextAction?: unknown;
       notes?: unknown;
+      labels?: unknown;
+      checklist?: unknown;
     },
   ) {
     if (typeof input.cardId !== "string" || !input.cardId) {
@@ -399,6 +401,8 @@ export class BoardService {
       blocks: draft.blocks,
       nextAction: draft.nextAction,
       notes: draft.notes,
+      labels: draft.labels,
+      checklist: draft.checklist,
       assignedByUid: actor.uid,
       assignedByName: actor.name,
       originCardName: card.name,
@@ -431,6 +435,8 @@ export class BoardService {
       blocks?: unknown;
       nextAction?: unknown;
       notes?: unknown;
+      labels?: unknown;
+      checklist?: unknown;
     },
   ) {
     const { dependency, board } = await this.editableDependency(actor, dependencyId);
@@ -452,6 +458,8 @@ export class BoardService {
         blocks: input.blocks === undefined ? dependency.blocks : input.blocks,
         nextAction: input.nextAction === undefined ? dependency.nextAction : input.nextAction,
         notes: input.notes === undefined ? dependency.notes : input.notes,
+        labels: input.labels === undefined ? dependency.labels : input.labels,
+        checklist: input.checklist === undefined ? dependency.checklist : input.checklist,
       },
       siblings,
       dependency.id,
@@ -485,6 +493,8 @@ export class BoardService {
         blocks: draft.blocks,
         nextAction: draft.nextAction,
         notes: draft.notes,
+        labels: draft.labels,
+        checklist: draft.checklist,
         ...(isSource ? { dependantOnLabel: draft.dependantOnLabel } : {}),
         updatedAt: timestamp,
       });
@@ -842,6 +852,8 @@ function fillDependency(item: Dependency): Dependency {
     nextAction: item.nextAction ?? null,
     startDate: item.startDate ?? null,
     notes: item.notes ?? null,
+    labels: item.labels ?? [],
+    checklist: item.checklist ?? [],
   };
 }
 

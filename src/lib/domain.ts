@@ -1,6 +1,6 @@
 import { CARD_COLORS, PRIORITIES, STATUSES, type Priority, type Status } from "./types";
 import { BoardError } from "./errors";
-import type { Dependency } from "./types";
+import type { ChecklistItem, Dependency } from "./types";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -76,6 +76,43 @@ export function assertDeadline(value: unknown, label = "Deadline"): string | nul
   return value;
 }
 
+export const MAX_LABELS = 6;
+export const MAX_CHECKLIST = 30;
+
+export function assertLabels(value: unknown): string[] {
+  if (value == null || value === "") return [];
+  if (!Array.isArray(value)) throw new BoardError("Labels must be a list.");
+  const labels: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") throw new BoardError("Each label must be text.");
+    const label = item.trim().replace(/\s+/g, " ");
+    if (!label) continue;
+    if (label.length > 24) throw new BoardError("Labels must be 24 characters or fewer.");
+    if (!labels.some((existing) => existing.toLowerCase() === label.toLowerCase())) labels.push(label);
+  }
+  if (labels.length > MAX_LABELS) throw new BoardError(`A task can have up to ${MAX_LABELS} labels.`);
+  return labels;
+}
+
+export function assertChecklist(value: unknown): ChecklistItem[] {
+  if (value == null || value === "") return [];
+  if (!Array.isArray(value)) throw new BoardError("The checklist must be a list.");
+  const items: ChecklistItem[] = [];
+  for (const raw of value) {
+    const entry = raw as { id?: unknown; text?: unknown; done?: unknown } | null;
+    const text = typeof entry?.text === "string" ? entry.text.trim() : "";
+    if (!text) continue;
+    if (text.length > 140) throw new BoardError("Checklist items must be 140 characters or fewer.");
+    const id =
+      typeof entry?.id === "string" && /^[\w-]{1,40}$/.test(entry.id) && !items.some((item) => item.id === entry.id)
+        ? entry.id
+        : globalThis.crypto.randomUUID();
+    items.push({ id, text, done: entry?.done === true });
+  }
+  if (items.length > MAX_CHECKLIST) throw new BoardError(`A checklist can have up to ${MAX_CHECKLIST} items.`);
+  return items;
+}
+
 export type DependencyDraft = {
   name: string;
   startDate: string | null;
@@ -90,6 +127,8 @@ export type DependencyDraft = {
   blocks: string | null;
   nextAction: string | null;
   notes: string | null;
+  labels: string[];
+  checklist: ChecklistItem[];
 };
 
 export function assertDependencyDraft(
@@ -107,6 +146,8 @@ export function assertDependencyDraft(
     blocks?: unknown;
     nextAction?: unknown;
     notes?: unknown;
+    labels?: unknown;
+    checklist?: unknown;
   },
   siblings: Dependency[],
   selfId: string | null,
@@ -162,6 +203,8 @@ export function assertDependencyDraft(
     blocks: optionalText(input.blocks, "Blocks"),
     nextAction: optionalText(input.nextAction, "Next action"),
     notes: optionalText(input.notes, "Notes", 2000),
+    labels: assertLabels(input.labels),
+    checklist: assertChecklist(input.checklist),
   };
 }
 
