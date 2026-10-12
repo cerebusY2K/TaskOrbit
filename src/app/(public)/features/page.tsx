@@ -38,6 +38,11 @@ export default function FeaturesPage() {
         next seven days and later. On a board, search the task names, notes, labels and checklists, and filter by owner,
         priority, status, label or overdue. Filters apply to every view.
       </p>
+      <p className="mt-3 text-sm leading-relaxed text-white/70">
+        On the morning a task is due, its owner gets a reminder, and another the day after if it is still not done.
+        If nobody owns the task, the reminder goes to the board owner. Reminders arrive as notices in the app, and
+        as push notifications if you turn those on.
+      </p>
 
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">Talk on the task</h2>
       <p className="mt-3 text-sm leading-relaxed text-white/70">

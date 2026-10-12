@@ -10,6 +10,7 @@ const ROWS = [
   ["Labels, checklists and search", "Yes, plus a My tasks list across boards", "Yes"],
   ["Gantt chart / timeline", "Included on every board, by task or by person", "Depends on your plan"],
   ["Integrations and automation", "None", "Many Power-Ups and built-in automation"],
+  ["Due-date reminders", "Yes: in the app and by push", "Yes"],
   ["Comments and activity", "Yes: comments and a history on each task and board", "Yes"],
   ["Attachments", "Not yet: notes on the task", "Yes"],
   ["Sign-in", "Google only", "Email, Google and others"],

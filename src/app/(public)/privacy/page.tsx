@@ -63,7 +63,7 @@ export default function PrivacyPage() {
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         The app stores in-app notices: a title, a short message, whether you have read it, when it was created, and
         the task it refers to when there is one. Typical notices are a task assigned to you, a new comment on a task
-        you are part of, someone joining or leaving a board, and tasks moved onto you when two members are merged.
+        you are part of, a reminder on the day a task is due and the day after if it is still open, someone joining or leaving a board, and tasks moved onto you when two members are merged.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Push is off until you turn it on. If you do, we store a push subscription for that device. In the browser

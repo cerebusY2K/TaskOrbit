@@ -74,7 +74,7 @@ export default function AsanaAlternativePage() {
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Sharing is one invite link per board. People sign in with Google, join the board, and edit the tasks they added or that are assigned to them.
-        Each task has comments and a history of who changed what. Assignments and replies show up as notices in the app, and as push notifications if they turn those on.
+        Each task has comments and a history of who changed what. Assignments, replies and due-date reminders show up as notices in the app, and as push notifications if they turn those on.
       </p>
 
       <h2 className="mt-10 font-display text-2xl font-semibold tracking-tight">When Asana is the better choice</h2>
