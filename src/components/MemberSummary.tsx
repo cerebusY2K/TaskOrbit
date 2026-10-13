@@ -46,7 +46,7 @@ export function MemberSummary({
   return (
     <aside
       aria-label="People summary"
-      className="glass-panel order-first mx-3 mb-3 flex max-h-[42vh] min-h-0 flex-col rounded-2xl sm:mx-5 lg:order-last lg:mb-4 lg:ml-0 lg:max-h-none lg:w-[380px] lg:shrink-0"
+      className="glass-panel order-last mx-3 mb-3 flex shrink-0 flex-col rounded-2xl sm:order-first sm:mx-5 sm:max-h-[42vh] sm:min-h-0 sm:shrink lg:order-last lg:mb-4 lg:ml-0 lg:max-h-none lg:w-[380px] lg:shrink-0"
     >
       <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-white/60">People</h2>

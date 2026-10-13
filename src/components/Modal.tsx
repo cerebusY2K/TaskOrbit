@@ -21,17 +21,17 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-end justify-center bg-scrim/70 p-3 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-40 flex items-end justify-center bg-scrim/70 backdrop-blur-sm sm:items-center sm:p-3"
       onMouseDown={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="glass-panel max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl p-5 text-white"
+        className="glass-panel max-h-[92dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-3xl px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white sm:max-h-[90vh] sm:rounded-2xl sm:p-5"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="sticky top-0 z-10 -mx-4 mb-4 flex items-start justify-between gap-3 bg-panel/95 px-4 pb-3 pt-4 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
           <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
           <button
             type="button"

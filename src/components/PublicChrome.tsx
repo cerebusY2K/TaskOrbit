@@ -7,24 +7,37 @@ const HEADER_LINKS = ["/features", "/templates", "/gantt", "/task-dependencies"]
 export function PublicHeader() {
   const links = HEADER_LINKS.map((path) => PUBLIC_PAGES.find((page) => page.path === path)!);
   return (
-    <header className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-4 px-5 py-6">
+    <header className="mx-auto grid w-full max-w-3xl grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 px-5 pb-4 pt-[max(1.25rem,env(safe-area-inset-top))] sm:flex sm:justify-between sm:py-6">
       <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
         <OrbitMark className="h-8 w-8" />
         TaskOrb
       </Link>
-      <nav aria-label="Primary" className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/70">
+      <nav
+        aria-label="Primary"
+        className="scrollbar-none col-span-2 row-start-2 -mx-5 flex items-center gap-1 overflow-x-auto px-4 text-sm text-white/70 sm:order-none sm:mx-0 sm:gap-x-4 sm:overflow-visible sm:px-0"
+      >
         {links.map((page) => (
-          <Link key={page.path} href={page.path} className="hover:text-white">
+          <Link
+            key={page.path}
+            href={page.path}
+            className="shrink-0 whitespace-nowrap rounded-full bg-white/5 px-3 py-1.5 hover:text-white sm:bg-transparent sm:px-0 sm:py-0"
+          >
             {page.label}
           </Link>
         ))}
         <Link
           href="/"
-          className="rounded-xl bg-white px-3 py-1.5 font-semibold text-surface transition hover:bg-white/90"
+          className="hidden rounded-xl bg-white px-3 py-1.5 font-semibold text-surface transition hover:bg-white/90 sm:inline-block"
         >
           Open TaskOrb
         </Link>
       </nav>
+      <Link
+        href="/"
+        className="rounded-xl bg-white px-3 py-1.5 text-sm font-semibold text-surface transition hover:bg-white/90 sm:hidden"
+      >
+        Open TaskOrb
+      </Link>
     </header>
   );
 }

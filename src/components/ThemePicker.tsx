@@ -3,16 +3,64 @@
 import { useEffect, useRef, useState } from "react";
 import { applyTheme, DEFAULT_THEME, THEME_STORAGE_KEY, THEMES } from "@/lib/themes";
 
-export function ThemePicker({ className }: { className: string }) {
-  const [open, setOpen] = useState(false);
+function useTheme() {
   const [current, setCurrent] = useState(DEFAULT_THEME);
-  const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved = document.documentElement.dataset.theme ?? DEFAULT_THEME;
     applyTheme(saved);
     setCurrent(saved);
   }, []);
+
+  function choose(id: string) {
+    applyTheme(id);
+    setCurrent(id);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, id);
+    } catch {
+      // Private mode: the theme still applies for this visit.
+    }
+  }
+
+  return [current, choose] as const;
+}
+
+function Swatch({ background, accent }: { background: string; accent: string }) {
+  return (
+    <span aria-hidden className="relative h-5 w-5 shrink-0 rounded-full border border-white/20" style={{ background }}>
+      <span className="absolute inset-1 rounded-full" style={{ background: accent }} />
+    </span>
+  );
+}
+
+/** Theme choices laid out as a grid, for the phone menu. */
+export function ThemeChoices() {
+  const [current, choose] = useTheme();
+  return (
+    <div role="radiogroup" aria-label="Color theme" className="grid grid-cols-3 gap-2">
+      {THEMES.map((theme) => (
+        <button
+          key={theme.id}
+          type="button"
+          role="radio"
+          aria-checked={current === theme.id}
+          className={`flex min-h-11 items-center gap-2 rounded-xl border px-2.5 text-left text-sm transition ${
+            current === theme.id ? "border-accent bg-accent/15 font-medium text-white" : "border-white/10 bg-white/5 text-white/75"
+          }`}
+          onClick={() => choose(theme.id)}
+        >
+          <Swatch background={theme.background} accent={theme.accent} />
+          <span className="truncate">{theme.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function ThemePicker({ className }: { className: string }) {
+  const [open, setOpen] = useState(false);
+  const [current, choose] = useTheme();
+  const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -29,16 +77,6 @@ export function ThemePicker({ className }: { className: string }) {
       window.removeEventListener("keydown", onKey);
     };
   }, [open]);
-
-  function choose(id: string) {
-    applyTheme(id);
-    setCurrent(id);
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, id);
-    } catch {
-      // Private mode: the theme still applies for this visit.
-    }
-  }
 
   return (
     <div ref={root} className="relative">
@@ -60,13 +98,7 @@ export function ThemePicker({ className }: { className: string }) {
                 }`}
                 onClick={() => choose(theme.id)}
               >
-                <span
-                  aria-hidden
-                  className="relative h-5 w-5 shrink-0 rounded-full border border-white/20"
-                  style={{ background: theme.background }}
-                >
-                  <span className="absolute inset-1 rounded-full" style={{ background: theme.accent }} />
-                </span>
+                <Swatch background={theme.background} accent={theme.accent} />
                 <span className="flex-1">{theme.name}</span>
                 {current === theme.id ? <span aria-hidden>✓</span> : null}
               </button>

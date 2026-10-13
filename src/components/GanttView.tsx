@@ -5,10 +5,12 @@ import { isOverdue } from "@/lib/domain";
 import type { PersonSummary } from "@/lib/member-summary";
 import type { Card, Dependency, Status } from "@/lib/types";
 import { STATUS_LABELS } from "@/lib/types";
+import { useIsPhone } from "./useIsPhone";
 
 const DAY = 36;
 const ROW = 36;
-const LABEL = 240;
+const LABEL_WIDTH = 240;
+const PHONE_LABEL_WIDTH = 132;
 
 const STATUS_COLORS: Record<Status, string> = {
   open: "#4d84ff",
@@ -88,6 +90,7 @@ export function GanttView({
   emptyMessage?: string;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
+  const LABEL = useIsPhone() ? PHONE_LABEL_WIDTH : LABEL_WIDTH;
   const [visibleDays, setVisibleDays] = useState(0);
   const todayDay = dayNumber(today);
   const groups = cards
@@ -139,7 +142,7 @@ export function GanttView({
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [LABEL]);
 
   useEffect(() => {
     const node = scroller.current;
@@ -180,9 +183,9 @@ export function GanttView({
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 px-3 pb-4 sm:px-5">
+    <div className="flex min-w-0 flex-none flex-col gap-3 px-3 pb-4 sm:min-h-0 sm:flex-1 sm:px-5">
       {toggle}
-      <div className="glass-panel flex min-h-0 overflow-hidden rounded-2xl">
+      <div className="glass-panel flex max-h-[60dvh] min-h-0 overflow-hidden rounded-2xl sm:max-h-none">
         <div ref={scroller} className="relative min-h-0 flex-1 overflow-auto">
           <div className="relative" style={{ width: LABEL + width }}>
             <div className="sticky top-0 z-20 flex border-b border-white/10 bg-surface/95 backdrop-blur">

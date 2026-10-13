@@ -32,7 +32,7 @@ export default function FeaturesPage() {
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         The app comes in six colour themes: Midnight, Aurora, Nebula, Ember, Rose and a light Daylight theme. Pick one
-        from Theme in the top bar, and it is remembered on that device.
+        from Theme in the top bar, or from the menu on a phone, and it is remembered on that device.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-white/70">
         Cards sit on a board. They are the columns: a person, a workstream, a client, whatever the board is about.

@@ -54,11 +54,11 @@ export function OrbitStage({
 
   function orbitOf(index: number) {
     const { width, height } = box;
-    const portrait = height > width;
-    const reach = reachOf(index);
+    const portrait = height > width || width < 640;
+    const reach = portrait ? 0.3 + 0.7 * reachOf(index) : reachOf(index);
     const tilt = tiltFor(index);
     const rx = clamp(width / 2 - (portrait ? 75 : 110), 60, 620) * reach;
-    const ry = Math.min(Math.max(50, height / 2 - 80) * reach, rx * (portrait ? 2.6 : 0.42));
+    const ry = Math.min(Math.max(50, height / 2 - (portrait ? 50 : 80)) * reach, rx * (portrait ? 2.6 : 0.42));
     return { rx, ry, tilt: portrait ? tilt * 0.4 : tilt };
   }
 

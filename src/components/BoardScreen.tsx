@@ -20,6 +20,8 @@ import type { Board, BoardPayload, Card, Dependency, Status } from "@/lib/types"
 import { OWNER_ASSIGNEE, PRIORITIES, PRIORITY_LABELS, REPEAT_LABELS, STATUSES, STATUS_LABELS } from "@/lib/types";
 import { BoardDialog } from "./BoardDialog";
 import { ThemePicker } from "./ThemePicker";
+import { MobileMenu, mobileMenuRow } from "./MobileMenu";
+import { isPhone, useIsPhone } from "./useIsPhone";
 import { CardDialog } from "./CardDialog";
 import { CardOrbit } from "./CardOrbit";
 import { DependencyDialog } from "./DependencyDialog";
@@ -53,7 +55,28 @@ const VIEW_LABELS: Record<BoardView, string> = { orbit: "Orbit", board: "Simple"
 function savedView(): BoardView {
   if (typeof window === "undefined") return "orbit";
   const value = window.localStorage.getItem(VIEW_KEY);
-  return value === "board" || value === "timeline" || value === "calendar" ? value : "orbit";
+  if (value === "orbit" || value === "board" || value === "timeline" || value === "calendar") return value;
+  return isPhone() ? "board" : "orbit";
+}
+
+function ViewSwitch({ view, onChange, className }: { view: BoardView; onChange: (view: BoardView) => void; className: string }) {
+  return (
+    <div role="group" aria-label="View" className={`rounded-full bg-white/5 p-0.5 ${className}`}>
+      {(["orbit", "board", "timeline", "calendar"] as const).map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={view === option}
+          className={`rounded-full px-3 py-1.5 text-sm transition sm:py-1 ${
+            view === option ? "bg-white/15 font-medium text-white" : "text-white/60 hover:text-white"
+          }`}
+          onClick={() => onChange(option)}
+        >
+          {VIEW_LABELS[option]}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function sortDependencies(items: Dependency[], today: string) {
@@ -105,6 +128,8 @@ export function BoardScreen({
   const [personKey, setPersonKey] = useState(EVERYONE);
   const [timelineMode, setTimelineMode] = useState<TimelineMode>("task");
   const [notesOpen, setNotesOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const phone = useIsPhone();
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [drag, setDrag] = useState<{
@@ -160,6 +185,7 @@ export function BoardScreen({
     today,
   );
   const filtering = filterIsActive(filter);
+  const filterCount = [filter.owner, filter.priority, filter.status, filter.label].filter(Boolean).length + Number(filter.overdue);
   const visible = (task: Dependency) => !filtering || matchesFilter(task, filter, assignedToMe, today);
   const labelsInUse = boardLabels(boardTasks);
   const shownCount = boardTasks.filter(visible).length;
@@ -309,23 +335,24 @@ export function BoardScreen({
     "rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/85 transition hover:bg-white/10 hover:text-white";
 
   return (
-    <div className="orbit-space relative flex h-screen min-h-0 flex-col overflow-hidden text-white">
+    <div className="orbit-space relative flex h-[100dvh] min-h-0 flex-col overflow-hidden text-white">
       {view === "orbit" ? null : <OrbitBackdrop className="absolute inset-0 opacity-30" />}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 transition-[background] duration-500"
         style={{ background: `radial-gradient(70% 45% at 50% -10%, rgba(${accent}, 0.28), transparent 70%)` }}
       />
-      <header className="relative flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:px-5">
+      <header className="relative flex items-center justify-between gap-3 px-3 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] sm:flex-wrap sm:px-5 sm:py-3">
         <div className="flex min-w-0 items-center gap-3">
           {onShowAll ? (
             <button
               type="button"
-              className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-3 text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
+              aria-label="All boards"
+              className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-white/10 bg-white/5 p-1 text-sm text-white/80 transition hover:bg-white/10 hover:text-white sm:pr-3"
               onClick={onShowAll}
             >
               <OrbitMark className="h-7 w-7" />
-              All boards
+              <span className="hidden sm:inline">All boards</span>
             </button>
           ) : (
             <OrbitMark className="h-8 w-8" />
@@ -341,13 +368,26 @@ export function BoardScreen({
             <p className="truncate text-xs text-white/50">
               {isOwner
                 ? view === "board"
-                  ? `${board.user.name} · drag a task onto another card`
+                  ? `${board.user.name} · ${phone ? "tap ⠿ to move a task" : "drag a task onto another card"}`
                   : board.user.name
                 : `Shared by ${ownerName} · you can edit tasks you add or that are assigned to you`}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <MobileMenu
+          title={active?.name ?? "TaskOrb"}
+          items={[
+            { label: "My tasks", count: myOverdue, alert: true, onSelect: () => setMyTasksOpen(true) },
+            { label: "Notifications", count: unread, alert: true, onSelect: () => setNotesOpen(true) },
+            { label: "Members", count: members.length + 1, onSelect: () => setMembersOpen(true) },
+            ...(active ? [{ label: "Activity", onSelect: () => setActivityOpen(true) }] : []),
+            ...(active && isOwner ? [{ label: "Edit board", onSelect: () => setBoardDialog(active) }] : []),
+            { label: "Add board", onSelect: () => setBoardDialog("new") },
+            { label: "Sign out", onSelect: () => void onSignOut() },
+          ]}
+          footer={<InstallButton className={mobileMenuRow} />}
+        />
+        <div className="hidden flex-wrap items-center gap-2 sm:flex">
           <button type="button" className={barBtn} onClick={() => setBoardDialog("new")}>
             Add board
           </button>
@@ -376,7 +416,7 @@ export function BoardScreen({
           </button>
         </div>
       </header>
-      <nav aria-label="Boards" className="relative flex gap-2 overflow-x-auto px-3 pb-3 sm:px-5">
+      <nav aria-label="Boards" className="scrollbar-none relative flex gap-2 overflow-x-auto px-3 pb-3 sm:px-5">
         {workspaces.map((item) => {
           const selected = item.id === active?.id;
           return (
@@ -399,7 +439,7 @@ export function BoardScreen({
         {active && isOwner ? (
           <button
             type="button"
-            className="shrink-0 rounded-full px-3 py-1.5 text-sm text-white/55 transition hover:bg-white/10 hover:text-white"
+            className="hidden shrink-0 rounded-full px-3 py-1.5 text-sm text-white/55 transition hover:bg-white/10 hover:text-white sm:block"
             onClick={() => setBoardDialog(active)}
           >
             Edit board
@@ -408,38 +448,36 @@ export function BoardScreen({
         {active ? (
           <button
             type="button"
-            className="shrink-0 rounded-full px-3 py-1.5 text-sm text-white/55 transition hover:bg-white/10 hover:text-white"
+            className="hidden shrink-0 rounded-full px-3 py-1.5 text-sm text-white/55 transition hover:bg-white/10 hover:text-white sm:block"
             onClick={() => setActivityOpen(true)}
           >
             Activity
           </button>
         ) : null}
-        <div role="group" aria-label="View" className="ml-auto flex shrink-0 rounded-full bg-white/5 p-0.5">
-          {(["orbit", "board", "timeline", "calendar"] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              aria-pressed={view === option}
-              className={`rounded-full px-3 py-1 text-sm transition ${
-                view === option ? "bg-white/15 font-medium text-white" : "text-white/60 hover:text-white"
-              }`}
-              onClick={() => setView(option)}
-            >
-              {VIEW_LABELS[option]}
-            </button>
-          ))}
-        </div>
+        <ViewSwitch view={view} onChange={setView} className="ml-auto hidden shrink-0 sm:flex" />
       </nav>
+      <div className="relative px-3 pb-2 sm:hidden">
+        <ViewSwitch view={view} onChange={setView} className="grid grid-cols-4" />
+      </div>
 
-      <div role="search" className="relative flex items-center gap-2 overflow-x-auto px-3 pb-3 sm:px-5">
+      <div role="search" className="relative flex flex-wrap items-center gap-2 px-3 pb-3 sm:flex-nowrap sm:overflow-x-auto sm:px-5">
         <input
           type="search"
           aria-label="Search tasks"
           placeholder="Search tasks"
-          className="w-44 shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none ring-accent placeholder:text-white/40 focus:ring-2 sm:w-56"
+          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-base text-white outline-none ring-accent placeholder:text-white/40 focus:ring-2 sm:w-56 sm:flex-none sm:shrink-0 sm:py-1.5 sm:text-sm"
           value={filter.query}
           onChange={(event) => setFilter({ ...filter, query: event.target.value })}
         />
+        <button
+          type="button"
+          aria-expanded={filtersOpen}
+          className={`${filterSelect(filterCount > 0)} py-2 sm:hidden`}
+          onClick={() => setFiltersOpen(!filtersOpen)}
+        >
+          Filters{filterCount ? ` · ${filterCount}` : ""}
+        </button>
+        <div className={filtersOpen ? "grid w-full grid-cols-2 gap-2 sm:contents" : "hidden sm:contents"}>
         <select
           aria-label="Filter by owner"
           className={filterSelect(filter.owner !== "")}
@@ -505,6 +543,7 @@ export function BoardScreen({
         >
           Overdue
         </button>
+        </div>
         {filtering ? (
           <>
             <span className="shrink-0 text-xs text-white/55">
@@ -555,7 +594,7 @@ export function BoardScreen({
           }}
         />
       ) : view === "timeline" ? (
-        <div className="relative flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:overflow-visible sm:pb-0 lg:flex-row">
           <GanttView
             cards={cards}
             dependencies={timelineTasks}
@@ -598,7 +637,7 @@ export function BoardScreen({
           onEditCard={isOwner ? (card) => setCardDialog(card) : undefined}
         />
       ) : (
-        <section className="relative flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-3 pb-4 sm:px-5">
+        <section className="relative flex min-h-0 flex-1 snap-x snap-mandatory scroll-px-3 items-start gap-3 overflow-x-auto px-3 pb-[calc(env(safe-area-inset-bottom)+16px)] sm:snap-none sm:px-5 sm:pb-4">
           {cards.map((card) => {
             const dependencies = sortDependencies(
               board.dependencies.filter((item) => item.cardId === card.id && visible(item)),
@@ -611,7 +650,7 @@ export function BoardScreen({
                 key={card.id}
                 data-card-id={card.id}
                 aria-label={`Card ${card.name}`}
-                className={`glass-panel flex max-h-full w-[320px] shrink-0 flex-col rounded-2xl ${card.isDone ? "order-2" : ""} ${
+                className={`glass-panel flex max-h-full w-[calc(100vw-2.5rem)] shrink-0 snap-start flex-col rounded-2xl sm:w-[320px] ${card.isDone ? "order-2" : ""} ${
                   dropping ? "ring-2 ring-white/70" : ""
                 }`}
                 onDragOver={(event) => {
@@ -669,7 +708,23 @@ export function BoardScreen({
                           } ${dragging ? "opacity-40" : ""}`}
                         >
                           <div className="flex items-start gap-2">
-                            {isOwner ? (
+                            {isOwner && phone ? (
+                              <span className="relative mt-0.5 shrink-0 text-white/45">
+                                <GripIcon />
+                                <select
+                                  aria-label={`Move ${dependency.name} to another card`}
+                                  className="absolute -inset-2 cursor-pointer opacity-0"
+                                  value={card.id}
+                                  onChange={(event) => void relocate(dependency.id, dependency.cardId, event.target.value)}
+                                >
+                                  {cards.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                      {option.id === card.id ? "Move to…" : option.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </span>
+                            ) : isOwner ? (
                               <button
                                 type="button"
                                 draggable
@@ -827,7 +882,7 @@ export function BoardScreen({
           {isOwner ? (
             <button
               type="button"
-              className="order-1 h-fit w-[300px] shrink-0 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-3 py-3 text-left text-sm font-medium text-white/60 transition hover:bg-white/[0.07] hover:text-white"
+              className="order-1 h-fit w-[calc(100vw-2.5rem)] shrink-0 snap-start rounded-2xl sm:w-[300px] border border-dashed border-white/15 bg-white/[0.03] px-3 py-3 text-left text-sm font-medium text-white/60 transition hover:bg-white/[0.07] hover:text-white"
               onClick={() => setCardDialog("new")}
             >
               + Add a card
@@ -1033,7 +1088,7 @@ export function BoardScreen({
       {notesOpen ? (
         <div className="fixed inset-0 z-30 flex justify-end bg-scrim/60 backdrop-blur-sm" onMouseDown={() => setNotesOpen(false)}>
           <aside
-            className="h-full w-full max-w-md overflow-y-auto border-l border-white/10 bg-panel/95 p-5 text-white shadow-xl"
+            className="h-[100dvh] w-full max-w-md overflow-y-auto overscroll-contain border-white/10 bg-panel/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] text-white shadow-xl sm:border-l sm:p-5"
             aria-label="Notifications"
             onMouseDown={(event) => event.stopPropagation()}
           >
